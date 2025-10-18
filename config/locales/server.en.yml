@@ -1,0 +1,10 @@
+en:
+  orbat:
+    empty_placeholder: "Vacant"
+    errors:
+      invalid_json: "Configuration JSON is invalid: %{message}"
+      missing_group: "Group \"%{group}\" is not recognised."
+      hidden_group: "Group \"%{group}\" is hidden from the ORBAT output."
+  orbat_admin:
+    errors:
+      missing_default: "Default ORBAT configuration is unavailable."

@@ -1,0 +1,66 @@
+{{! template-lint-disable require-strict-mode}}
+<div
+  class={{this.wrapperClass}}
+  data-orbat-code={{@node.code}}
+  data-orbat-level={{this.level}}
+>
+  <header class="orbat-node__header">
+    {{#if @node.badge}}
+      <span class="orbat-node__badge">{{@node.badge}}</span>
+    {{/if}}
+    <h3 class="orbat-node__label">
+      {{@node.label}}
+    </h3>
+    {{#if @node.description}}
+      <p class="orbat-node__description">
+        {{@node.description}}
+      </p>
+    {{/if}}
+  </header>
+
+  {{#if this.hasUsers}}
+    <div class="orbat-node__users">
+      {{#each this.userColumns as |column|}}
+        <ul class="orbat-node__users-column">
+          {{#each column as |user|}}
+            <li class="orbat-node__user">
+              {{#if this.showAvatars}}
+                <UserAvatar
+                  @user={{user}}
+                  @size="small"
+                  class="orbat-node__avatar"
+                />
+              {{/if}}
+              <a
+                href={{or user.summaryPath user.profilePath user.path}}
+                class="orbat-node__user-link"
+                {{on "click" (fn this.openSummary user)}}
+              >
+                {{this.formatDisplayName user}}
+              </a>
+              {{#if user.title}}
+                <span class="orbat-node__user-title">{{user.title}}</span>
+              {{/if}}
+            </li>
+          {{/each}}
+        </ul>
+      {{/each}}
+    </div>
+  {{else if this.showPlaceholder}}
+    <div class="orbat-node__placeholder">
+      {{this.placeholderText}}
+    </div>
+  {{/if}}
+
+  {{#if this.hasChildren}}
+    <div class="orbat-node__branches" data-children={{this.childCount}}>
+      <div class={{this.childrenClass}} style={{this.childrenStyle}}>
+        {{#each this.children as |child|}}
+          <div class="orbat-node__branch">
+            <OrbatNode @node={{child}} @display={{@display}} />
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+</div>

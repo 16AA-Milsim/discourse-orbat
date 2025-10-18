@@ -1,0 +1,42 @@
+plugins:
+  orbat_enabled:
+    default: true
+  orbat_json:
+    client: true
+    type: text
+    default: |
+      {
+        "title": "A Company HQ",
+        "subtitle": null,
+        "banner": null,
+        "display": {
+          "showEmpty": true,
+          "hideGroupLinks": true,
+          "showAvatars": false,
+          "maxPerColumn": 12,
+          "rootLayout": "column",
+          "gap": "sm",
+          "emptyLabel": "-"
+        },
+        "rankPriority": [
+          "Coy_IC",
+          "Coy_2IC",
+          "CSM"
+        ],
+        "nodes": [
+          {
+            "id": "coy-hq",
+            "code": "1",
+            "label": "Coy HQ",
+            "theme": "company",
+            "badge": "Company HQ",
+            "select": {
+              "any": ["Coy_IC", "Coy_2IC", "CSM"],
+              "limit": 3,
+              "sort": "rankPriority"
+            },
+            "layout": { "type": "column", "align": "center" },
+            "alwaysShow": true
+          }
+        ]
+      }

@@ -1,0 +1,38 @@
+en:
+  js:
+    orbat:
+      page:
+        heading: "%{title}"
+        subheading: "%{subtitle}"
+        errors_title: "Configuration warnings"
+        no_data: "The ORBAT configuration does not yet contain any visible units."
+        back: "Go back"
+      node:
+        placeholder: "-"
+        empty: "-"
+      banner:
+        view_settings: "Adjust structure in the ORBAT plugin settings."
+    orbat_admin:
+      nav_title: "ORBAT"
+      title: "Operational ORBAT"
+      description: "Design the organisational structure presented on the public ORBAT page. Use the JSON editor to control hierarchy, styling, and membership rules."
+      editor:
+        heading: "Configuration"
+        instructions: "Update the JSON structure to change units, hierarchy, and selection rules."
+        help: "Use the preview to verify the layout before saving. Members are resolved based on group membership."
+      preview:
+        heading: "Live Preview"
+        unavailable: "Preview will appear here after you generate it."
+        loading: "Generating preview…"
+      notices:
+        saved: "ORBAT configuration saved."
+        restored: "Default ORBAT configuration restored."
+        preview_failed: "Unable to generate preview. Please check the configuration."
+      actions:
+        preview: "Preview changes"
+        reset: "Revert changes"
+        save: "Save configuration"
+        restore_default: "Restore default"
+    static:
+      orbat:
+        title: "ORBAT"

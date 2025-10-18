@@ -1,0 +1,83 @@
+{{#if this.disallow}}
+  <div class="orbat-empty">
+    {{i18n "admin.site_settings.only_admins"}}
+  </div>
+{{else}}
+  <div class="orbat-admin">
+    <header class="orbat-banner">
+      <div class="orbat-banner__text">
+        <h1 class="orbat-banner__title">
+          {{i18n "orbat_admin.title"}}
+        </h1>
+        <p class="orbat-banner__subtitle">
+          {{i18n "orbat_admin.description"}}
+        </p>
+      </div>
+    </header>
+
+    <div class="orbat-admin__layout">
+      <section class="orbat-admin__editor">
+        <Form
+          @data={{this.data}}
+          @onSubmit={{this.save}}
+          @onRegisterApi={{this.registerFormApi}}
+          @onReset={{this.resetForm}}
+          @validate={{this.validateDraft}}
+          as |form|
+        >
+          <form.Container
+            @title={{i18n "orbat_admin.editor.heading"}}
+            @subtitle={{i18n "orbat_admin.editor.instructions"}}
+          >
+            <form.Field
+              @name="configuration"
+              @title={{i18n "orbat_admin.editor.heading"}}
+              @description={{i18n "orbat_admin.editor.help"}}
+              as |field|
+            >
+              <field.Code @lang="javascript" @height={{420}} />
+            </form.Field>
+          </form.Container>
+
+          <form.Actions>
+            <form.Submit @label="orbat_admin.actions.save" />
+            <form.Button
+              @label="orbat_admin.actions.preview"
+              @type="button"
+              class="btn-secondary"
+              @action={{this.generatePreview}}
+            />
+            <form.Button
+              @label="orbat_admin.actions.restore_default"
+              @type="button"
+              class="btn-danger"
+              @action={{this.restoreDefault}}
+            />
+            <form.Reset />
+          </form.Actions>
+        </Form>
+
+        {{#if this.notice}}
+          <div class="alert alert-info">
+            {{this.notice}}
+          </div>
+        {{/if}}
+      </section>
+
+      <section class="orbat-admin__preview">
+        <h2 class="orbat-admin__preview-heading">
+          {{i18n "orbat_admin.preview.heading"}}
+        </h2>
+        {{#if (eq this.previewState "loading")}}
+          <ConditionalLoadingSpinner @size="medium" />
+        {{else if this.tree}}
+          <OrbatTree @tree={{this.tree}} />
+        {{else}}
+          <p class="orbat-admin__indicator">
+            {{i18n "orbat_admin.preview.unavailable"}}
+          </p>
+        {{/if}}
+      </section>
+    </div>
+  </div>
+{{/if}}

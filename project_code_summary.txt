@@ -1,0 +1,207 @@
+Generated on: Sat Oct 18 02:16:54 AM CEST 2025
+
+
+Directory Tree Overview:
+.
+├── assets
+│   ├── javascripts
+│   │   └── discourse
+│   │       ├── components
+│   │       │   ├── orbat-node.hbs
+│   │       │   └── orbat-tree.hbs
+│   │       ├── discourse-orbat-route-map.js
+│   │       ├── routes
+│   │       │   └── orbat.js
+│   │       └── templates
+│   │           └── orbat.hbs
+│   └── stylesheets
+│       └── common
+│           └── orbat.scss
+├── config
+│   └── locales
+│       └── client.en.yml
+├── generate_code_summary.sh
+├── lib
+│   └── orbat
+│       └── service.rb
+├── plugin.rb
+├── project_code_summary.txt
+└── settings.yml
+
+13 directories, 12 files
+
+
+
+==== FILE: ./assets/stylesheets/common/orbat.scss ====
+.orbat-page { min-height: calc(90vh - var(--header-offset, 0px));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:1rem; }
+.square { width:200px; height:200px; background: var(--primary);
+  box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+
+
+
+==== FILE: ./assets/javascripts/discourse/discourse-orbat-route-map.js ====
+export default function () {
+  this.route("orbat", { path: "/orbat" });
+}
+
+
+
+==== FILE: ./assets/javascripts/discourse/components/orbat-node.hbs ====
+<div class="orbat-node">
+  <div class="node-header">{{@node.label}}</div>
+  <div class="node-users">
+    {{#each @node.users as |u|}}
+      <UserLink @user={{u}} />
+    {{/each}}
+  </div>
+  {{#if @node.children}}
+    <div class="node-children">
+      {{#each @node.children as |c|}} <OrbatNode @node={{c}} /> {{/each}}
+    </div>
+  {{/if}}
+</div>
+
+
+==== FILE: ./assets/javascripts/discourse/components/orbat-tree.hbs ====
+{{#if @node.title}}<h1>{{@node.title}}</h1>{{/if}}
+<div class="orbat-grid">
+  {{#each @node.nodes as |n|}}
+    <OrbatNode @node={{n}} />
+  {{/each}}
+</div>
+
+
+==== FILE: ./assets/javascripts/discourse/templates/orbat.hbs ====
+<OrbatTree @node={{this.model}} />
+
+
+==== FILE: ./assets/javascripts/discourse/routes/orbat.js ====
+// routes/orbat.js
+import Route from "@ember/routing/route";
+import { ajax } from "discourse/lib/ajax";
+export default class OrbatRoute extends Route {
+  model(){ return ajax("/orbat.json"); }
+}
+
+
+
+==== FILE: ./settings.yml ====
+plugins:
+  orbat_enabled:
+    default: true
+  orbat_json:
+    client: true
+    type: text
+    default: "{}"
+  orbat_cache_ttl:
+    default: 60
+  orbat_hide_hidden_groups:
+    default: true
+
+
+
+==== FILE: ./config/locales/client.en.yml ====
+en:
+  js:
+    static:
+      orbat:
+        title: "ORBAT"
+
+
+
+==== FILE: ./plugin.rb ====
+# name: discourse-orbat
+# version: 0.1
+# author: OpenAI & Darojax
+
+# frozen_string_literal: true
+
+# define namespace before requiring service
+module ::Orbat; end
+require_relative "lib/orbat/service"
+
+register_asset "stylesheets/common/orbat.scss"
+
+after_initialize do
+  on(:group_user_created)  { ::PluginStore.remove("orbat", "tree") }
+  on(:group_user_destroyed){ ::PluginStore.remove("orbat", "tree") }
+
+  class ::Orbat::Controller < ::ApplicationController
+    requires_login false
+    def index; render html: "", layout: "application"; end
+    def data; render_json_dump(::Orbat::Service.cached_tree); end
+  end
+
+  Discourse::Application.routes.append do
+    get "/orbat" => "orbat/controller#index", constraints: { format: :html }
+    get "/orbat.json" => "orbat/controller#data"
+  end
+end
+
+
+
+==== FILE: ./lib/orbat/service.rb ====
+# lib/orbat/service.rb (create under plugin and require)
+class ::Orbat::Service
+  def self.cached_tree
+    PluginStore.cached_call("orbat","tree",expires_in: SiteSetting.orbat_cache_ttl.seconds){ build }
+  end
+
+  def self.build
+    conf = JSON.parse(SiteSetting.orbat_json.presence || "{}")
+    groups = Group.where(name: all_group_names(conf)).pluck(:id, :name).to_h { |id,name| [name,id] }
+    members = GroupUser.where(group_id: groups.values).includes(:user).group_by { |gu| gu.group.name }
+    walk(conf["nodes"] || [], groups, members, conf)
+  rescue => e
+    Rails.logger.error("[orbat] #{e.class}: #{e.message}")
+    { error: e.message, nodes: [] }
+  end
+
+  def self.all_group_names(conf)
+    conf.to_json.scan(/"([A-Za-z0-9._\-]+)"/).flatten # crude but fast
+  end
+
+  def self.walk(nodes, groups, members, conf)
+    { title: conf["title"], nodes: nodes.map { |n| node(n, groups, members, conf) } }
+  end
+
+  def self.node(n, groups, members, conf)
+    out = { id: n["id"], label: n["label"], users: [] }
+    if sel = n["select"]
+      ids = resolve(sel, groups, members)
+      out[:users] = sort_and_limit(ids, sel, conf)
+    end
+    out[:children] = (n["children"] || []).map { |c| node(c, groups, members, conf) } if n["children"]
+    out
+  end
+
+  def self.resolve(sel, groups, members)
+    any = Array(sel["any"]).flat_map { |g| members[g] || [] }.map(&:user)
+    all = Array(sel["all"]).map { |g| (members[g] || []).map(&:user) }.reduce(nil) { |a,b| a ? a & b : b } || []
+    base = if sel["all"] then all else any end
+    notset = Array(sel["not"]).flat_map { |g| (members[g] || []).map(&:user_id) }
+    base.uniq.reject { |u| notset.include?(u.id) }
+  end
+
+  def self.sort_and_limit(users, sel, conf)
+    case sel["sort"] || "alpha"
+    when "joined" then users.sort_by!(&:created_at)
+    when "rankPriority"
+      order = Array(conf["rankPriority"])
+      users.sort_by! do |u|
+        idx = GroupUser.where(user_id: u.id).joins(:group).pluck("groups.name").map { |n| order.index(n) || 999 }.min || 999
+        [idx, u.username_lower]
+      end
+    else users.sort_by!(&:username_lower)
+    end
+    users = users.first(sel["limit"]) if sel["limit"]
+    users.map { |u| { id: u.id, username: u.username, name: u.name, avatar: u.avatar_template } }
+  end
+end
+
+
+
