@@ -4,19 +4,21 @@
   data-orbat-code={{@node.code}}
   data-orbat-level={{this.level}}
 >
-  <header class="orbat-node__header">
-    {{#if @node.badge}}
-      <span class="orbat-node__badge">{{@node.badge}}</span>
-    {{/if}}
-    <h3 class="orbat-node__label">
-      {{@node.label}}
-    </h3>
-    {{#if @node.description}}
-      <p class="orbat-node__description">
-        {{@node.description}}
-      </p>
-    {{/if}}
-  </header>
+  {{#if this.shouldShowHeader}}
+    <header class="orbat-node__header">
+      {{#if @node.badge}}
+        <span class="orbat-node__badge">{{@node.badge}}</span>
+      {{/if}}
+      <h3 class="orbat-node__label">
+        {{@node.label}}
+      </h3>
+      {{#if @node.description}}
+        <p class="orbat-node__description">
+          {{@node.description}}
+        </p>
+      {{/if}}
+    </header>
+  {{/if}}
 
   {{#if this.hasUsers}}
     <div class="orbat-node__users">

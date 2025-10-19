@@ -2,7 +2,7 @@ import Component from "@glimmer/component";
 import { action } from "@ember/object";
 import { service } from "@ember/service";
 import { htmlSafe } from "@ember/template";
-import getURL from "discourse/lib/get-url";
+import getURL, { getURLWithCDN } from "discourse/lib/get-url";
 import DiscourseURL from "discourse/lib/url";
 
 /**
@@ -18,6 +18,38 @@ export default class OrbatTree extends Component {
 
   get nodes() {
     return this.tree.nodes || [];
+  }
+
+  get primaryNode() {
+    return this.nodes[0] || null;
+  }
+
+  get mastheadLogo() {
+    return this.resolveImage("16th_air_assault.svg");
+  }
+
+  get hqIcon() {
+    return this.resolveImage("hq.png");
+  }
+
+  get platoonIcon() {
+    return this.resolveImage("red_hq.png");
+  }
+
+  get secondaryNodes() {
+    if (this.nodes.length <= 1) {
+      return [];
+    }
+
+    return this.nodes.slice(1);
+  }
+
+  get hasPrimaryNode() {
+    return !!this.primaryNode;
+  }
+
+  get hasSecondaryNodes() {
+    return this.secondaryNodes.length > 0;
   }
 
   get display() {
@@ -38,24 +70,6 @@ export default class OrbatTree extends Component {
 
   get banner() {
     return this.tree.banner || {};
-  }
-
-  get hasBanner() {
-    return (
-      this.banner.title ||
-      this.banner.subtitle ||
-      this.banner.logo ||
-      this.tree.title ||
-      this.tree.subtitle
-    );
-  }
-
-  get rootClassNames() {
-    const layout = this.display.rootLayout || "row";
-    const gap = this.display.gap || "lg";
-    const classes = ["orbat-tree__nodes", `orbat-tree__nodes--${layout}`];
-    classes.push(`orbat-tree__nodes--gap-${gap}`);
-    return classes.join(" ");
   }
 
   get rootStyle() {
@@ -84,5 +98,9 @@ export default class OrbatTree extends Component {
     }
 
     DiscourseURL.routeTo(this.backHref);
+  }
+
+  resolveImage(filename) {
+    return getURLWithCDN(`/plugins/discourse-orbat/images/common/${filename}`);
   }
 }

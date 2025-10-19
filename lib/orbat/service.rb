@@ -1,6 +1,7 @@
-require "set"
+# frozen_string_literal: true
 
-# lib/orbat/service.rb
+require "set" # rubocop:disable Lint/RedundantRequireStatement
+
 class ::Orbat::Service
   CACHE_KEY = "orbat:tree"
 
@@ -88,13 +89,12 @@ class ::Orbat::Service
       group_names.concat(rank_priority)
       group_names = group_names.compact.uniq
 
-      groups = if group_names.empty?
-        {}
-      else
-        Group
-          .where(name: group_names)
-          .index_by(&:name)
-      end
+      groups =
+        if group_names.empty?
+          {}
+        else
+          Group.where(name: group_names).index_by(&:name)
+        end
 
       member_records =
         if groups.present?
@@ -113,9 +113,9 @@ class ::Orbat::Service
       end
 
       display =
-        DEFAULT_DISPLAY
-          .merge(config.fetch("display", {}))
-          .merge("emptyLabel" => config.dig("display", "emptyLabel").presence || default_empty_label)
+        DEFAULT_DISPLAY.merge(config.fetch("display", {})).merge(
+          "emptyLabel" => config.dig("display", "emptyLabel").presence || default_empty_label,
+        )
 
       {
         groups: groups,
@@ -131,9 +131,7 @@ class ::Orbat::Service
     end
 
     def build_rank_index(priority)
-      priority.each_with_index.each_with_object({}) do |(name, index), result|
-        result[name] = index
-      end
+      priority.each_with_index.each_with_object({}) { |(name, index), result| result[name] = index }
     end
 
     def collect_group_names(nodes)
@@ -148,11 +146,10 @@ class ::Orbat::Service
       names
     end
 
-    def build_nodes(definitions, context, parent_code: nil)
+    def build_nodes(definitions, context, parent_code:)
       definitions.filter_map do |definition|
         node = build_node(definition, context, parent_code: parent_code)
-        next if node.nil?
-        node
+        node if node
       end
     end
 
@@ -167,9 +164,8 @@ class ::Orbat::Service
       users = sort_and_limit(users, select, context) if select
 
       placeholder =
-        select &&
-          select["placeholder"].presence ||
-          context[:display]["emptyLabel"]
+        (select && select["placeholder"].presence) ||
+        context[:display]["emptyLabel"]
 
       children = build_nodes(definition.fetch("children", []), context, parent_code: code)
 
@@ -209,7 +205,7 @@ class ::Orbat::Service
 
       type = layout["type"].presence || layout["mode"].presence || "column"
 
-      normalized = {
+      {
         "type" => type,
         "columns" => layout["columns"] || layout["cols"],
         "gap" => layout["gap"] || layout["spacing"],
@@ -217,18 +213,14 @@ class ::Orbat::Service
         "justify" => layout["justify"],
         "wrap" => layout.key?("wrap") ? layout["wrap"] : type == "row",
       }.compact
-
-      normalized
     end
 
     def prune_empty(nodes, context)
       nodes.each_with_object([]) do |node, pruned|
         children = prune_empty(node["children"] || [], context)
         keep =
-          node.fetch("users", []).present? ||
-          children.present? ||
-          node["placeholder"].present? ||
-          node.dig("meta", "alwaysShow")
+          node.fetch("users", []).present? || children.present? || node["placeholder"].present? ||
+            node.dig("meta", "alwaysShow")
 
         next unless keep
 
@@ -240,16 +232,20 @@ class ::Orbat::Service
       include_hidden = select["includeHidden"] ? true : false
 
       any =
-        Array(select["any"]).flat_map do |group_name|
-          members_for(group_name, context, include_hidden: include_hidden)
-        end.map(&:user)
+        Array(select["any"])
+          .flat_map do |group_name|
+            members_for(group_name, context, include_hidden: include_hidden)
+          end
+          .map(&:user)
 
       all =
-        Array(select["all"]).map do |group_name|
-          members_for(group_name, context, include_hidden: include_hidden).map(&:user)
-        end.reduce(nil) do |accumulator, collection|
-          accumulator ? accumulator & collection : collection
-        end || []
+        Array(select["all"])
+          .map do |group_name|
+            members_for(group_name, context, include_hidden: include_hidden).map(&:user)
+          end
+          .reduce(nil) do |accumulator, collection|
+            accumulator ? accumulator & collection : collection
+          end || []
 
       base = select["all"] ? all : any
 
@@ -258,9 +254,7 @@ class ::Orbat::Service
           members_for(group_name, context, include_hidden: true).map(&:user_id)
         end
 
-      base
-        .uniq { |user| user.id }
-        .reject { |user| exclusions.include?(user.id) }
+      base.uniq { |user| user.id }.reject { |user| exclusions.include?(user.id) }
     end
 
     def members_for(group_name, context, include_hidden:)
@@ -308,7 +302,11 @@ class ::Orbat::Service
           users.sort_by(&:created_at)
         when "rankPriority"
           users.sort_by do |user|
-            rank_index = context[:user_groups][user.id].map { |name| context[:rank_index][name] }.compact.min || Float::INFINITY
+            rank_index =
+              context[:user_groups][user.id]
+                .map { |name| context[:rank_index][name] }
+                .compact
+                .min || Float::INFINITY
             [rank_index, user.username_lower]
           end
         else

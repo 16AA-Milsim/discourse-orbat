@@ -2,6 +2,6 @@ export default {
   resource: "admin.adminPlugins",
   path: "/plugins",
   map() {
-    this.route("orbat", { path: "/orbat" });
+    this.route("orbat");
   },
 };

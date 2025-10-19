@@ -11,16 +11,27 @@
     </a>
   </div>
 
-  {{#if this.tree.title}}
-    <h1 class="orbat-page__heading">
-      {{this.tree.title}}
-    </h1>
-  {{/if}}
-  {{#if this.tree.subtitle}}
-    <p class="orbat-banner__subtitle">
-      {{this.tree.subtitle}}
-    </p>
-  {{/if}}
+  <div class="orbat-page__masthead">
+    <img
+      class="orbat-page__masthead-logo"
+      src={{this.mastheadLogo}}
+      alt="16 Air Assault Brigade insignia"
+      width="50"
+      height="60"
+    />
+    <div class="orbat-page__masthead-text">
+      {{#if this.tree.title}}
+        <h1 class="orbat-page__title">
+          {{this.tree.title}}
+        </h1>
+      {{/if}}
+      {{#if this.tree.subtitle}}
+        <p class="orbat-page__subtitle">
+          {{this.tree.subtitle}}
+        </p>
+      {{/if}}
+    </div>
+  </div>
 
   {{#if this.hasErrors}}
     <section class="orbat-alert">
@@ -35,15 +46,59 @@
     </section>
   {{/if}}
 
-  {{#if this.hasNodes}}
-    <div class={{this.rootClassNames}} style={{this.rootStyle}}>
-      {{#each this.nodes as |node|}}
-        <OrbatNode @node={{node}} @display={{this.display}} />
-      {{/each}}
-    </div>
-  {{else}}
+  {{#if this.hasPrimaryNode}}
+    <section class={{if this.hasSecondaryNodes "orbat-root orbat-root--has-secondary" "orbat-root"}}>
+      <div class="orbat-primary">
+        <div class="orbat-primary__heading">
+          <img
+            class="orbat-primary__icon"
+            src={{this.hqIcon}}
+            alt="HQ emblem"
+            width="16"
+            height="16"
+          />
+          <h2 class="orbat-primary__title">
+            {{this.primaryNode.label}}
+          </h2>
+        </div>
+        <div class="orbat-primary__node">
+          <OrbatNode
+            @node={{this.primaryNode}}
+            @display={{this.display}}
+            @showLabel={{false}}
+            @centered={{true}}
+          />
+        </div>
+      </div>
+
+      {{#if this.hasSecondaryNodes}}
+        <span class="orbat-root__connector" aria-hidden="true"></span>
+        <div class="orbat-secondary" style={{this.rootStyle}}>
+          {{#each this.secondaryNodes as |node|}}
+            <section class="orbat-secondary__item">
+              <div class="orbat-secondary__heading">
+                <img
+                  class="orbat-secondary__icon"
+                  src={{this.platoonIcon}}
+                  alt="Platoon HQ emblem"
+                  width="14"
+                  height="14"
+                />
+                <h3 class="orbat-section__title">
+                  {{node.label}}
+                </h3>
+              </div>
+              <OrbatNode @node={{node}} @display={{this.display}} @showLabel={{false}} />
+            </section>
+          {{/each}}
+        </div>
+      {{/if}}
+    </section>
+  {{/if}}
+
+  {{#unless this.hasPrimaryNode}}
     <div class="orbat-empty">
       {{i18n "orbat.page.no_data"}}
     </div>
-  {{/if}}
+  {{/unless}}
 </div>

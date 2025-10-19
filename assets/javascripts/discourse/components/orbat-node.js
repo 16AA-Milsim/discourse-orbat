@@ -16,6 +16,10 @@ export default class OrbatNode extends Component {
     return this.args.node || {};
   }
 
+  get centered() {
+    return this.args.centered || false;
+  }
+
   get display() {
     return this.args.display || {};
   }
@@ -42,6 +46,14 @@ export default class OrbatNode extends Component {
 
   get layout() {
     return this.node.layout || {};
+  }
+
+  get showLabel() {
+    return this.args.showLabel !== false;
+  }
+
+  get shouldShowHeader() {
+    return this.showLabel;
   }
 
   get hasUsers() {
@@ -76,6 +88,9 @@ export default class OrbatNode extends Component {
       classes.push("orbat-node--has-parent");
     }
     classes.push(`orbat-node--level-${this.level}`);
+    if (this.centered) {
+      classes.push("orbat-node--centered");
+    }
     return classes.join(" ");
   }
 
