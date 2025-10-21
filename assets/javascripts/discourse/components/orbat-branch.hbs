@@ -1,0 +1,14 @@
+{{! template-lint-disable require-strict-mode}}
+<li class={{concat "orbat-branch__item " (if this.hasChildren "orbat-branch__item--has-children" "")}}>
+  <div class="orbat-branch__node">
+    <OrbatNode @node={{this.node}} @display={{this.display}} />
+  </div>
+
+  {{#if this.hasChildren}}
+    <ul class={{concat "orbat-branch__children " (if this.hasMultipleChildren "orbat-branch__children--multi" "")}}>
+      {{#each this.children key="id" as |child|}}
+        <OrbatBranch @node={{child}} @display={{this.display}} />
+      {{/each}}
+    </ul>
+  {{/if}}
+</li>

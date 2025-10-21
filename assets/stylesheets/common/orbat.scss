@@ -3,9 +3,6 @@
   --orbat-connector-width: 2px;
   --orbat-node-min-width: 7rem;
   --orbat-node-gap: clamp(0.75rem, 2vw, 1.25rem);
-  --orbat-primary-secondary-gap: clamp(0.9rem, 2.5vw, 1.4rem);
-  --orbat-secondary-connector-depth: clamp(0.5rem, 1.5vw, 0.85rem);
-  --orbat-secondary-padding-top: clamp(0.35rem, 1vw, 0.6rem);
   min-height: calc(100vh - var(--header-offset, 0px));
   width: 100%;
   padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 3vw, 2rem) clamp(2.5rem, 6vw, 3.5rem);
@@ -103,160 +100,117 @@
   padding-left: 1.25rem;
 }
 
-.orbat-root {
-  display: grid;
-  justify-items: center;
-  width: min(100%, 720px);
-  margin: 0 auto;
-  row-gap: 0;
-  position: relative;
-}
-
-.orbat-root__connector {
-  display: block;
-  width: var(--orbat-connector-width);
-  height: var(--orbat-primary-secondary-gap);
-  background: var(--orbat-connector-color);
-}
-
-.orbat-primary {
-  display: grid;
-  justify-items: center;
-  gap: 3px;
+.orbat-tree {
   width: 100%;
-  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.orbat-primary__heading {
-  display: inline-flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0.3rem;
-  margin-bottom: 0.08rem;
-}
-
-.orbat-primary__icon {
-  width: 16px;
-  height: 16px;
-}
-
-.orbat-primary__title {
+.orbat-tree__list,
+.orbat-branch__children {
+  list-style: none;
   margin: 0;
-  font-size: clamp(0.5rem, 1.3vw, 0.7rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  padding: 0;
+}
+
+.orbat-tree__list {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.orbat-tree__list--row {
+  flex-wrap: wrap;
+}
+
+.orbat-tree__list--column {
+  flex-direction: column;
+  align-items: center;
+}
+
+.orbat-tree__list > .orbat-branch__item {
+  padding-top: 0;
+}
+
+.orbat-branch__item {
+  position: relative;
+  padding: 20px 3px 0 3px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  
   text-align: center;
 }
 
-.orbat-primary__node {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  width: min(100%, var(--orbat-node-min-width));
-  margin: 0 auto;
+.orbat-branch__item::before,
+.orbat-branch__item::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 20px;
+  border-top: 1px solid var(--orbat-connector-color);
 }
 
-.orbat-secondary {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--orbat-node-gap);
-  width: min(100%, 680px);
-  position: relative;
-  padding-top: var(--orbat-secondary-padding-top);
-  margin-inline: auto;
+.orbat-branch__item::before {
+  right: 50%;
 }
 
-.orbat-secondary__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  width: min(100%, var(--orbat-node-min-width));
-  margin-inline: auto;
-  margin-top: 10px;
+.orbat-branch__item::after {
+  left: 50%;
+  border-left: 1px solid var(--orbat-connector-color);
 }
 
-.orbat-secondary__heading {
+.orbat-branch__item:first-child::before,
+.orbat-branch__item:last-child::after {
+  border: 0 none;
+}
+
+.orbat-branch__item:last-child::before {
+  border-right: 1px solid var(--orbat-connector-color);
+}
+
+.orbat-branch__item:only-child::before,
+.orbat-branch__item:only-child::after {
+  display: none;
+}
+
+.orbat-branch__node {
   display: inline-flex;
   justify-content: center;
-  gap: 0.3rem;
-  margin-bottom: 0.05rem;
 }
 
-.orbat-secondary__icon {
-  width: 14px;
-  height: 14px;
-}
-
-.orbat-secondary__item .orbat-section__title {
-  margin-bottom: 0.05rem;
-  font-size: clamp(0.45rem, 1.2vw, 0.6rem);
-}
-
-.orbat-secondary::before {
+.orbat-branch__node::after {
   content: "";
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
   width: var(--orbat-connector-width);
-  height: var(--orbat-secondary-connector-depth);
+  height: 20px;
   background: var(--orbat-connector-color);
 }
 
-.orbat-banner {
+.orbat-tree__list > .orbat-branch__item .orbat-branch__node::after {
+  display: none;
+}
+
+.orbat-branch__children {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  background: var(--secondary);
-  border: 1px solid var(--primary-200);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 16px 30px rgb(0 0 0 / 5%);
+  justify-content: center;
+  position: relative;
+  padding-top: 20px;
 }
 
-.orbat-banner__logo {
-  width: clamp(64px, 8vw, 96px);
-  height: auto;
-}
-
-.orbat-banner__text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.orbat-banner__title {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.orbat-banner__subtitle {
-  margin: 0;
-  font-size: clamp(1rem, 2.6vw, 1.25rem);
-  color: var(--primary-medium);
-}
-
-.orbat-banner__hint {
-  font-size: 0.875rem;
-  color: var(--primary-low-mid);
-}
-
-.orbat-empty {
-  margin: 0 auto;
-  padding: 2.5rem;
-  max-width: 480px;
-  text-align: center;
-  border-radius: 12px;
-  border: 1px dashed var(--primary-300);
-  background: var(--secondary);
-  color: var(--primary-medium);
-  font-size: 1rem;
+.orbat-branch__children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--orbat-connector-width);
+  height: 20px;
+  background: var(--orbat-connector-color);
 }
 
 .orbat-node {
@@ -267,8 +221,7 @@
   display: flex;
   flex-direction: column;
   gap: clamp(0.6rem, 1.5vw, 0.85rem);
-  width: min(100%, var(--orbat-node-min-width));
-  min-width: min(100%, var(--orbat-node-min-width));
+  width: 80px; // DO NOT ALTER THIS LINE!
   box-shadow: 0 10px 24px rgb(15 23 42 / 5%);
   position: relative;
   font-size: 9px;
@@ -287,18 +240,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  align-items: center;
 }
 
-.orbat-node__badge {
-  align-self: flex-start;
-  background: var(--primary-very-low);
-  color: var(--primary-high);
-  border-radius: 999px;
-  padding: 0.1em 0.6em;
-  font-size: 0.7em;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.orbat-node__icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .orbat-node__label {
@@ -367,183 +315,4 @@
   color: var(--primary-medium);
   font-size: 0.8em;
   text-align: center;
-}
-
-.orbat-node__children {
-  margin-top: 0.35rem;
-  position: relative;
-  padding-top: clamp(0.75rem, 2vw, 1.1rem);
-}
-
-.orbat-node__branches {
-  position: relative;
-  margin-top: clamp(0.75rem, 2vw, 1.1rem);
-  padding-top: clamp(0.75rem, 2vw, 1.1rem);
-}
-
-.orbat-node__branches::before {
-  content: "";
-  position: absolute;
-  top: calc(-1 * clamp(0.75rem, 2vw, 1.1rem));
-  left: 50%;
-  transform: translateX(-50%);
-  width: var(--orbat-connector-width);
-  height: clamp(0.75rem, 2vw, 1.1rem);
-  background: var(--orbat-connector-color);
-  pointer-events: none;
-}
-
-.orbat-node__children--row {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  gap: var(--orbat-node-gap);
-  overflow-x: auto;
-}
-
-.orbat-node__children--column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--orbat-node-gap);
-}
-
-.orbat-node__children--grid {
-  display: grid;
-  gap: var(--orbat-node-gap);
-  /* grid-template-columns: repeat(var(--orbat-node-columns, auto-fit), minmax(200px, 1fr)); */
-}
-
-body.has-sidebar-page #main-outlet-wrapper {
-    grid-template-columns: 0 !important;
-}
-
-.orbat-node__children::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: calc(var(--orbat-node-gap) / 2);
-  right: calc(var(--orbat-node-gap) / 2);
-  height: var(--orbat-connector-width);
-  background: var(--orbat-connector-color);
-  pointer-events: none;
-}
-
-.orbat-node__children--column::before {
-  left: 50%;
-  right: auto;
-  width: var(--orbat-connector-width);
-  transform: translateX(-50%);
-}
-
-.orbat-node__children--solo::before {
-  display: none;
-}
-
-.orbat-node__branch {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  padding-top: clamp(0.75rem, 2vw, 1.1rem);
-}
-
-.orbat-node__branch::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: var(--orbat-connector-width);
-  height: clamp(0.75rem, 2vw, 1.1rem);
-  background: var(--orbat-connector-color);
-  pointer-events: none;
-}
-
-.orbat-node--has-parent::after {
-  content: "";
-  position: absolute;
-  top: calc(-1 * clamp(0.5rem, 1.5vw, 0.9rem));
-  left: 50%;
-  transform: translateX(-50%);
-  width: var(--orbat-connector-width);
-  height: clamp(0.5rem, 1.5vw, 0.9rem);
-  background: var(--orbat-connector-color);
-  pointer-events: none;
-}
-
-.orbat-admin {
-  display: grid;
-  gap: 2rem;
-}
-
-.orbat-admin__layout {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: minmax(280px, 1fr);
-}
-
-.orbat-admin__editor,
-.orbat-admin__preview {
-  background: var(--secondary-very-high);
-  border: 1px solid var(--primary-200);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 14px 34px rgb(15 23 42 / 5%);
-}
-
-.orbat-admin__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-.orbat-admin__preview-heading {
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.orbat-admin__indicator {
-  font-size: 0.9rem;
-  color: var(--primary-medium);
-}
-
-@media (width >= 1024px) {
-  .orbat-admin__layout {
-    grid-template-columns: minmax(320px, 1fr) minmax(340px, 1fr);
-    align-items: start;
-  }
-}
-
-body.orbat-view .wrap,
-body.orbat-view #main-outlet,
-body.orbat-view #main-outlet-wrapper,
-body.orbat-view .main-content,
-body.orbat-view .navigation-container,
-body.orbat-view .container {
-  max-width: none;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-}
-
-body.orbat-view.has-sidebar-page #main-outlet-wrapper {
-  /* grid-template-columns: minmax(0, 1fr) !important; */
-  gap: 0 !important;
-  padding-left: 0 !important;
-}
-
-body.orbat-view .main-content {
-  margin: 0;
-  width: 100%;
-}
-.orbat-section__title {
-  margin: 0;
-  font-size: clamp(0.75rem, 2vw, 0.95rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: center;
-}
-.orbat-primary__node .orbat-node {
-  margin-top: 0;
 }

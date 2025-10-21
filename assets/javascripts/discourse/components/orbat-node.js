@@ -1,10 +1,10 @@
 import Component from "@glimmer/component";
 import { action } from "@ember/object";
-import { htmlSafe } from "@ember/template";
 import userPrioritizedName from "discourse/helpers/user-prioritized-name";
 import DiscourseURL from "discourse/lib/url";
 import { formatUsername } from "discourse/lib/utilities";
 import { i18n } from "discourse-i18n";
+import { getURLWithCDN } from "discourse/lib/get-url";
 
 /**
  * @component orbat-node
@@ -16,36 +16,12 @@ export default class OrbatNode extends Component {
     return this.args.node || {};
   }
 
-  get centered() {
-    return this.args.centered || false;
-  }
-
   get display() {
     return this.args.display || {};
   }
 
   get users() {
     return this.node.users || [];
-  }
-
-  get level() {
-    return Number(this.node.level) || 1;
-  }
-
-  get hasParent() {
-    return !!this.node.parentCode;
-  }
-
-  get children() {
-    return this.node.children || [];
-  }
-
-  get childCount() {
-    return this.children.length;
-  }
-
-  get layout() {
-    return this.node.layout || {};
   }
 
   get showLabel() {
@@ -58,10 +34,6 @@ export default class OrbatNode extends Component {
 
   get hasUsers() {
     return this.users.length > 0;
-  }
-
-  get hasChildren() {
-    return this.children.length > 0;
   }
 
   get showPlaceholder() {
@@ -77,46 +49,18 @@ export default class OrbatNode extends Component {
   }
 
   get wrapperClass() {
-    const classes = ["orbat-node", `orbat-node--theme-${this.node.theme || "neutral"}`];
-    if (this.hasChildren) {
-      classes.push("orbat-node--has-children");
-    }
-    if (!this.hasUsers && !this.hasChildren) {
-      classes.push("orbat-node--empty");
-    }
-    if (this.hasParent) {
-      classes.push("orbat-node--has-parent");
-    }
-    classes.push(`orbat-node--level-${this.level}`);
-    if (this.centered) {
-      classes.push("orbat-node--centered");
-    }
-    return classes.join(" ");
+    return [
+      "orbat-node",
+      `orbat-node--theme-${this.node.theme || "neutral"}`,
+    ].join(" ");
   }
 
-  get childrenClass() {
-    const type = this.layout.type || "column";
-    const classes = ["orbat-node__children", `orbat-node__children--${type}`];
-    if (this.childCount === 1) {
-      classes.push("orbat-node__children--solo");
-    } else if (this.childCount > 1) {
-      classes.push("orbat-node__children--multi");
-    }
-    return classes.join(" ");
+  get icon() {
+    return this.resolveIcon(this.node.icon);
   }
 
-  get childrenStyle() {
-    const styles = [];
-    if (this.layout.columns) {
-      styles.push(`--orbat-node-columns:${this.layout.columns};`);
-    }
-    if (this.layout.gap) {
-      styles.push(`--orbat-node-gap:${this.layout.gap};`);
-    }
-    if (styles.length === 0) {
-      return null;
-    }
-    return htmlSafe(styles.join(""));
+  get hasIcon() {
+    return !!this.icon;
   }
 
   get userColumns() {
@@ -139,6 +83,40 @@ export default class OrbatNode extends Component {
 
   get displayNameFallback() {
     return this.display?.emptyLabel || "-";
+  }
+
+  get showAvatars() {
+    return !!this.display.showAvatars;
+  }
+
+  resolveIcon(value) {
+    if (!value) {
+      return null;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return null;
+    }
+
+    if (/^https?:\/\//i.test(raw)) {
+      return raw;
+    }
+
+    if (raw.startsWith("/")) {
+      return getURLWithCDN(raw);
+    }
+
+    const sanitized = raw.replace(/^\/+/g, "");
+    let path = sanitized;
+
+    if (!path.includes("/")) {
+      path = `images/common/${path}`;
+    } else if (!path.startsWith("images/")) {
+      path = `images/${path}`;
+    }
+
+    return getURLWithCDN(`/plugins/discourse-orbat/${path}`);
   }
 
   formatDisplayName(user) {
@@ -170,10 +148,6 @@ export default class OrbatNode extends Component {
     }
 
     return baseName || this.displayNameFallback;
-  }
-
-  get showAvatars() {
-    return !!this.display.showAvatars;
   }
 
   @action

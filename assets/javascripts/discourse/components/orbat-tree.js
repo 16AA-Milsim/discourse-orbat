@@ -20,36 +20,16 @@ export default class OrbatTree extends Component {
     return this.tree.nodes || [];
   }
 
-  get primaryNode() {
-    return this.nodes[0] || null;
+  get rootNodes() {
+    return this._buildHierarchy();
+  }
+
+  get hasNodes() {
+    return this.rootNodes.length > 0;
   }
 
   get mastheadLogo() {
     return this.resolveImage("16th_air_assault.svg");
-  }
-
-  get hqIcon() {
-    return this.resolveImage("hq.png");
-  }
-
-  get platoonIcon() {
-    return this.resolveImage("red_hq.png");
-  }
-
-  get secondaryNodes() {
-    if (this.nodes.length <= 1) {
-      return [];
-    }
-
-    return this.nodes.slice(1);
-  }
-
-  get hasPrimaryNode() {
-    return !!this.primaryNode;
-  }
-
-  get hasSecondaryNodes() {
-    return this.secondaryNodes.length > 0;
   }
 
   get display() {
@@ -64,10 +44,6 @@ export default class OrbatTree extends Component {
     return this.errors.length > 0;
   }
 
-  get hasNodes() {
-    return this.nodes.length > 0;
-  }
-
   get banner() {
     return this.tree.banner || {};
   }
@@ -77,7 +53,15 @@ export default class OrbatTree extends Component {
     if (this.display.rootColumns) {
       styles.push(`--orbat-root-columns:${this.display.rootColumns};`);
     }
+
     return styles.length ? htmlSafe(styles.join("")) : null;
+  }
+
+  get rootLayoutClass() {
+    const layout = (this.display.rootLayout || "column").toLowerCase();
+    return layout === "row"
+      ? "orbat-tree__list--row"
+      : "orbat-tree__list--column";
   }
 
   get backHref() {
@@ -85,6 +69,7 @@ export default class OrbatTree extends Component {
     if (previous && previous !== "/orbat") {
       return getURL(previous);
     }
+
     return getURL("/");
   }
 
@@ -101,6 +86,76 @@ export default class OrbatTree extends Component {
   }
 
   resolveImage(filename) {
-    return getURLWithCDN(`/plugins/discourse-orbat/images/common/${filename}`);
+    if (!filename) {
+      return null;
+    }
+
+    const sanitized = filename.replace(/^\/+/g, "");
+    let path = sanitized;
+
+    if (!path.includes("/")) {
+      path = `images/common/${path}`;
+    } else if (!path.startsWith("images/")) {
+      path = `images/${path}`;
+    }
+
+    return getURLWithCDN(`/plugins/discourse-orbat/${path}`);
+  }
+
+  _buildHierarchy() {
+    const clones = this.nodes.map((node) => this._cloneNode(node));
+    const byCode = new Map();
+
+    const register = (node) => {
+      byCode.set(node.code, node);
+      (node.children || []).forEach(register);
+    };
+
+    clones.forEach(register);
+
+    const roots = [];
+
+    const attachToParent = (node) => {
+      const parentCode = node.parentCode || this._deriveParentCode(node.code);
+      if (parentCode && byCode.has(parentCode) && byCode.get(parentCode) !== node) {
+        const parent = byCode.get(parentCode);
+        parent.children = parent.children || [];
+        if (!parent.children.some((child) => child.code === node.code)) {
+          parent.children.push(node);
+        }
+        return true;
+      }
+
+      return false;
+    };
+
+    clones.forEach((node) => {
+      if (!attachToParent(node)) {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  }
+
+  _cloneNode(node) {
+    return {
+      ...node,
+      children: (node.children || []).map((child) => this._cloneNode(child)),
+    };
+  }
+
+  _deriveParentCode(code) {
+    if (!code) {
+      return null;
+    }
+
+    const parts = code.toString().split(".");
+    if (parts.length < 2) {
+      return null;
+    }
+
+    parts.pop();
+    return parts.join(".");
   }
 }

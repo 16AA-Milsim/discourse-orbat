@@ -14,7 +14,7 @@ plugins:
           "hideGroupLinks": true,
           "showAvatars": false,
           "maxPerColumn": 12,
-          "rootLayout": "column",
+          "rootLayout": "row",
           "gap": "sm",
           "emptyLabel": "-"
         },
@@ -23,7 +23,9 @@ plugins:
           "Coy_2IC",
           "CSM",
           "1_Platoon_IC",
-          "1_Platoon_2IC"
+          "1_Platoon_2IC",
+          "2_Platoon_IC",
+          "2_Platoon_2IC"
         ],
         "nodes": [
           {
@@ -31,13 +33,13 @@ plugins:
             "code": "1",
             "label": "A Company HQ",
             "theme": "company",
-            "badge": "Company HQ",
+            "icon": "hq.png",
             "select": {
               "any": ["Coy_IC", "Coy_2IC", "CSM"],
               "limit": 3,
               "sort": "rankPriority"
             },
-            "layout": { "type": "column", "align": "center" },
+            "layout": { "type": "row", "align": "center" },
             "alwaysShow": true
           },
           {
@@ -45,9 +47,23 @@ plugins:
             "code": "1.1",
             "label": "1 Platoon HQ",
             "theme": "platoon",
-            "badge": "Platoon HQ",
+            "icon": "red_hq.png",
             "select": {
               "any": ["1_Platoon_IC", "1_Platoon_2IC"],
+              "limit": 2,
+              "sort": "rankPriority"
+            },
+            "layout": { "type": "column", "align": "center" },
+            "alwaysShow": true
+          },
+          {
+            "id": "platoon-2-hq",
+            "code": "1.2",
+            "label": "2 Platoon HQ",
+            "theme": "platoon",
+            "icon": "green_hq.png",
+            "select": {
+              "any": ["2_Platoon_IC", "2_Platoon_2IC"],
               "limit": 2,
               "sort": "rankPriority"
             },

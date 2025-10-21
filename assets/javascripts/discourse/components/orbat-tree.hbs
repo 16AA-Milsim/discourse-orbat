@@ -46,59 +46,17 @@
     </section>
   {{/if}}
 
-  {{#if this.hasPrimaryNode}}
-    <section class={{if this.hasSecondaryNodes "orbat-root orbat-root--has-secondary" "orbat-root"}}>
-      <div class="orbat-primary">
-        <div class="orbat-primary__heading">
-          <img
-            class="orbat-primary__icon"
-            src={{this.hqIcon}}
-            alt="HQ emblem"
-            width="16"
-            height="16"
-          />
-          <h2 class="orbat-primary__title">
-            {{this.primaryNode.label}}
-          </h2>
-        </div>
-        <div class="orbat-primary__node">
-          <OrbatNode
-            @node={{this.primaryNode}}
-            @display={{this.display}}
-            @showLabel={{false}}
-            @centered={{true}}
-          />
-        </div>
-      </div>
-
-      {{#if this.hasSecondaryNodes}}
-        <span class="orbat-root__connector" aria-hidden="true"></span>
-        <div class="orbat-secondary" style={{this.rootStyle}}>
-          {{#each this.secondaryNodes as |node|}}
-            <section class="orbat-secondary__item">
-              <div class="orbat-secondary__heading">
-                <img
-                  class="orbat-secondary__icon"
-                  src={{this.platoonIcon}}
-                  alt="Platoon HQ emblem"
-                  width="14"
-                  height="14"
-                />
-                <h3 class="orbat-section__title">
-                  {{node.label}}
-                </h3>
-              </div>
-              <OrbatNode @node={{node}} @display={{this.display}} @showLabel={{false}} />
-            </section>
-          {{/each}}
-        </div>
-      {{/if}}
-    </section>
-  {{/if}}
-
-  {{#unless this.hasPrimaryNode}}
+  {{#if this.hasNodes}}
+    <nav class="orbat-tree">
+      <ul class={{concat "orbat-tree__list " this.rootLayoutClass}} style={{this.rootStyle}}>
+        {{#each this.rootNodes key="id" as |node|}}
+          <OrbatBranch @node={{node}} @display={{this.display}} />
+        {{/each}}
+      </ul>
+    </nav>
+  {{else}}
     <div class="orbat-empty">
       {{i18n "orbat.page.no_data"}}
     </div>
-  {{/unless}}
+  {{/if}}
 </div>

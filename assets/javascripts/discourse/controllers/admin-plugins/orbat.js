@@ -2,6 +2,7 @@ import { tracked } from "@glimmer/tracking";
 import Controller from "@ember/controller";
 import { action } from "@ember/object";
 import { ajax } from "discourse/lib/ajax";
+import { scheduleOnce } from "@ember/runloop";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { i18n } from "discourse-i18n";
 
@@ -16,6 +17,7 @@ export default class AdminPluginsOrbatController extends Controller {
   @tracked disallow = false;
 
   formApi = null;
+  _pendingFormSync = false;
 
   setup(model) {
     if (model?.disallow) {
@@ -30,6 +32,7 @@ export default class AdminPluginsOrbatController extends Controller {
     this.tree = model?.tree || null;
     this.notice = null;
     this.previewState = "idle";
+    this._queueFormSync();
   }
 
   get previewErrors() {
@@ -39,6 +42,7 @@ export default class AdminPluginsOrbatController extends Controller {
   @action
   registerFormApi(api) {
     this.formApi = api;
+    this._queueFormSync();
   }
 
   @action
@@ -83,6 +87,7 @@ export default class AdminPluginsOrbatController extends Controller {
       this.tree = tree;
       this.notice = i18n("orbat_admin.notices.saved");
       this.previewState = "idle";
+      this._queueFormSync();
     } catch (error) {
       popupAjaxError(error);
     }
@@ -140,6 +145,7 @@ export default class AdminPluginsOrbatController extends Controller {
   resetForm(draftData) {
     this.data = { configuration: draftData?.configuration ?? "" };
     this.notice = null;
+    this._queueFormSync();
   }
 
   ensureConfigurationValid(configuration) {
@@ -164,5 +170,28 @@ export default class AdminPluginsOrbatController extends Controller {
       });
       return false;
     }
+  }
+
+  _queueFormSync() {
+    if (!this.formApi || !this.data) {
+      return;
+    }
+
+    if (this._pendingFormSync) {
+      return;
+    }
+
+    this._pendingFormSync = true;
+    scheduleOnce("afterRender", this, this._flushFormSync);
+  }
+
+  _flushFormSync() {
+    this._pendingFormSync = false;
+    if (!this.formApi || !this.data) {
+      return;
+    }
+
+    const payload = { ...this.data };
+    this.formApi.setProperties?.(payload);
   }
 }
