@@ -112,9 +112,18 @@
 .orbat-tree__list {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: var(--orbat-node-gap);
   width: max-content;
   margin: 0 auto;
+}
+
+.orbat-tree__list > .orbat-branch__item {
+  padding-top: 0;
+}
+
+.orbat-tree__list > .orbat-branch__item::before,
+.orbat-tree__list > .orbat-branch__item::after {
+  display: none;
 }
 
 .orbat-tree__list--row {
@@ -288,7 +297,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   width: max-content;
   max-width: 100%;
 }
@@ -308,7 +317,7 @@
 
 .orbat-node__label {
   margin: 0;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.15px;
   text-transform: uppercase;
@@ -361,7 +370,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .orbat-node__avatar {

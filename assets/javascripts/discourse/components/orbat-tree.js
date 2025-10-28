@@ -1,17 +1,13 @@
 import Component from "@glimmer/component";
 import { action } from "@ember/object";
-import { service } from "@ember/service";
 import { htmlSafe } from "@ember/template";
-import getURL, { getURLWithCDN } from "discourse/lib/get-url";
-import DiscourseURL from "discourse/lib/url";
+import { getURLWithCDN } from "discourse/lib/get-url";
 
 /**
  * @component orbat-tree
  * @param {Object} tree - Resolved ORBAT tree payload
  */
 export default class OrbatTree extends Component {
-  @service routeHistory;
-
   get tree() {
     return this.args.tree || {};
   }
@@ -62,27 +58,6 @@ export default class OrbatTree extends Component {
     return layout === "row"
       ? "orbat-tree__list--row"
       : "orbat-tree__list--column";
-  }
-
-  get backHref() {
-    const previous = this.routeHistory?.lastURL;
-    if (previous && previous !== "/orbat") {
-      return getURL(previous);
-    }
-
-    return getURL("/");
-  }
-
-  @action
-  goBack(event) {
-    event?.preventDefault();
-
-    if (window.history.length > 1) {
-      window.history.back();
-      return;
-    }
-
-    DiscourseURL.routeTo(this.backHref);
   }
 
   resolveImage(filename) {

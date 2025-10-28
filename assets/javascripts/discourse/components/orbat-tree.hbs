@@ -1,16 +1,5 @@
 {{! template-lint-disable require-strict-mode}}
 <div class="orbat-page">
-  <div class="orbat-page__toolbar">
-    <a
-      href={{this.backHref}}
-      class="orbat-page__back"
-      {{on "click" this.goBack}}
-    >
-      {{d-icon "chevron-left"}}
-      <span>{{i18n "orbat.page.back"}}</span>
-    </a>
-  </div>
-
   <div class="orbat-page__canvas">
     <div class="orbat-page__canvas-inner">
       {{#if this.hasErrors}}

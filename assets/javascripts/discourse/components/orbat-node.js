@@ -1,6 +1,5 @@
 import Component from "@glimmer/component";
 import { action } from "@ember/object";
-import userPrioritizedName from "discourse/helpers/user-prioritized-name";
 import DiscourseURL from "discourse/lib/url";
 import { formatUsername } from "discourse/lib/utilities";
 import { i18n } from "discourse-i18n";
@@ -217,22 +216,16 @@ export default class OrbatNode extends Component {
     }
 
     const prefix = user.rankPrefix || user.rank_prefix;
+    const username = user.username?.trim();
 
-    let baseName = user.name?.trim();
-
-    if (!baseName) {
-      const prioritized = userPrioritizedName(user)?.trim();
-      if (prioritized) {
-        baseName = prioritized;
-      }
-    }
+    let baseName = username;
 
     if (!baseName) {
       baseName = formatUsername(user.username)?.trim();
     }
 
     if (!baseName) {
-      baseName = user.username || this.displayNameFallback;
+      baseName = this.displayNameFallback;
     }
 
     if (prefix && baseName && !baseName.startsWith(prefix)) {

@@ -1,6 +1,10 @@
 plugins:
   orbat_enabled:
+    client: true
     default: true
+  orbat_admin_only:
+    client: true
+    default: false
   orbat_json:
     client: true
     type: text
@@ -19,6 +23,35 @@ plugins:
           "emptyLabel": "-"
         },
         "rankPriority": [
+          "Major",
+          "Squadron_Leader",
+          "Captain",
+          "Flight_Lieutenant",
+          "Lieutenant",
+          "Flying_Officer",
+          "Second_Lieutenant",
+          "Pilot_Officer",
+          "Acting_Second_Lieutenant",
+          "Warrant_Officer_Class_2",
+          "Colour_Sergeant",
+          "Staff_Sergeant",
+          "Flight_Sergeant_Aircrew",
+          "Sergeant",
+          "Sergeant_Aircrew",
+          "Acting_Sergeant",
+          "Corporal",
+          "Bombardier",
+          "Acting_Corporal",
+          "Acting_Bombardier",
+          "Lance_Corporal",
+          "Lance_Bombardier",
+          "Acting_Lance_Corporal",
+          "Acting_Lance_Bombardier",
+          "Private",
+          "Gunner",
+          "Recruit"
+        ],
+        "groupPriority": [
           "Coy_IC",
           "Coy_2IC",
           "CSM",

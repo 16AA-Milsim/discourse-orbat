@@ -15,6 +15,31 @@
       </div>
     </header>
 
+    <div class="orbat-admin__settings">
+      <label class="orbat-setting">
+        <span class="orbat-setting__label">
+          {{i18n "orbat_admin.settings.enabled"}}
+        </span>
+        <Input
+          @type="checkbox"
+          @checked={{this.orbatEnabled}}
+          @disabled={{this.updatingEnabled}}
+          {{on "change" this.updateOrbatEnabled}}
+        />
+      </label>
+      <label class="orbat-setting">
+        <span class="orbat-setting__label">
+          {{i18n "orbat_admin.settings.admin_only"}}
+        </span>
+        <Input
+          @type="checkbox"
+          @checked={{this.orbatAdminOnly}}
+          @disabled={{this.adminOnlyDisabled}}
+          {{on "change" this.updateOrbatAdminOnly}}
+        />
+      </label>
+    </div>
+
     <div class="orbat-admin__layout">
       <section class="orbat-admin__editor">
         {{#if this.isLoaded}}
@@ -22,7 +47,6 @@
             @data={{this.data}}
             @onSubmit={{this.save}}
             @onRegisterApi={{this.registerFormApi}}
-            @onReset={{this.resetForm}}
             @validate={{this.validateDraft}}
             as |form|
           >
@@ -43,7 +67,7 @@
             <form.Actions>
               <form.Submit @label="orbat_admin.actions.save" />
               <form.Button
-                @label="orbat_admin.actions.preview"
+                @label="orbat_admin.actions.preview_orbat"
                 @type="button"
                 class="btn-secondary"
                 @action={{this.generatePreview}}
@@ -54,7 +78,6 @@
                 class="btn-danger"
                 @action={{this.restoreDefault}}
               />
-              <form.Reset />
             </form.Actions>
           </Form>
 

@@ -20,6 +20,35 @@ class ::Orbat::Service
         "emptyLabel": "-"
       },
       "rankPriority": [
+        "Major",
+        "Squadron_Leader",
+        "Captain",
+        "Flight_Lieutenant",
+        "Lieutenant",
+        "Flying_Officer",
+        "Second_Lieutenant",
+        "Pilot_Officer",
+        "Acting_Second_Lieutenant",
+        "Warrant_Officer_Class_2",
+        "Colour_Sergeant",
+        "Staff_Sergeant",
+        "Flight_Sergeant_Aircrew",
+        "Sergeant",
+        "Sergeant_Aircrew",
+        "Acting_Sergeant",
+        "Corporal",
+        "Bombardier",
+        "Acting_Corporal",
+        "Acting_Bombardier",
+        "Lance_Corporal",
+        "Lance_Bombardier",
+        "Acting_Lance_Corporal",
+        "Acting_Lance_Bombardier",
+        "Private",
+        "Gunner",
+        "Recruit"
+      ],
+      "groupPriority": [
         "Coy_IC",
         "Coy_2IC",
         "CSM",
@@ -407,6 +436,36 @@ class ::Orbat::Service
     }
   JSON
 
+  DEFAULT_RANK_PRIORITY = %w[
+    Major
+    Squadron_Leader
+    Captain
+    Flight_Lieutenant
+    Lieutenant
+    Flying_Officer
+    Second_Lieutenant
+    Pilot_Officer
+    Acting_Second_Lieutenant
+    Warrant_Officer_Class_2
+    Colour_Sergeant
+    Staff_Sergeant
+    Flight_Sergeant_Aircrew
+    Sergeant
+    Sergeant_Aircrew
+    Acting_Sergeant
+    Corporal
+    Bombardier
+    Acting_Corporal
+    Acting_Bombardier
+    Lance_Corporal
+    Lance_Bombardier
+    Acting_Lance_Corporal
+    Acting_Lance_Bombardier
+    Private
+    Gunner
+    Recruit
+  ].map(&:freeze).freeze
+
   SETTING_DEFAULTS = {
     orbat_cache_ttl: 60,
     orbat_json: DEFAULT_CONFIGURATION,
@@ -485,10 +544,27 @@ class ::Orbat::Service
     end
 
     def build_context(config)
-      rank_priority = Array(config["rankPriority"]).map(&:to_s)
+      legacy_rank_priority = false
+
+      if config.key?("groupPriority")
+        group_priority = Array(config["groupPriority"]).map(&:to_s)
+      else
+        group_priority = Array(config["rankPriority"]).map(&:to_s)
+        legacy_rank_priority = true
+      end
+
+      rank_priority_groups =
+        if !legacy_rank_priority && config.key?("rankPriority")
+          Array(config["rankPriority"]).map(&:to_s)
+        else
+          Array(config["rankGroups"]).map(&:to_s)
+        end
+
+      rank_priority_groups = DEFAULT_RANK_PRIORITY if rank_priority_groups.blank?
 
       group_names = collect_group_names(config.fetch("nodes", []))
-      group_names.concat(rank_priority)
+      group_names.concat(group_priority)
+      group_names.concat(rank_priority_groups)
       group_names = group_names.compact.uniq
 
       groups =
@@ -523,8 +599,9 @@ class ::Orbat::Service
         groups: groups,
         members: members,
         user_groups: user_groups,
-        rank_priority: rank_priority,
-        rank_index: build_rank_index(rank_priority),
+        group_priority: group_priority,
+        rank_priority: rank_priority_groups,
+        rank_index: build_rank_index(rank_priority_groups, group_priority),
         display: display,
         hide_hidden_groups: setting(:orbat_hide_hidden_groups) ? true : false,
         errors: [],
@@ -532,8 +609,20 @@ class ::Orbat::Service
       }
     end
 
-    def build_rank_index(priority)
-      priority.each_with_index.each_with_object({}) { |(name, index), result| result[name] = index }
+    def build_rank_index(rank_priority_groups, group_priority)
+      index_map = {}
+
+      rank_priority_groups.each_with_index do |name, index|
+        index_map[name] = index
+      end
+
+      offset = rank_priority_groups.length
+
+      group_priority.each_with_index do |name, index|
+        index_map[name] ||= offset + index
+      end
+
+      index_map
     end
 
     def collect_group_names(nodes)
@@ -706,21 +795,21 @@ class ::Orbat::Service
         when "joined"
           users.sort_by(&:created_at)
         when "rankPriority"
-          users.sort_by do |user|
-            rank_index =
-              context[:user_groups][user.id]
-                .map { |name| context[:rank_index][name] }
-                .compact
-                .min || Float::INFINITY
-            [rank_index, user.username_lower]
-          end
+          users.sort_by { |user| [best_rank_index(user, context), user.username_lower] }
         else
-          users.sort_by(&:username_lower)
+          users.sort_by { |user| [best_rank_index(user, context), user.username_lower] }
         end
 
       sorted = sorted.first(limit) if limit.present?
 
       sorted.map { |user| serialize_user(user, context) }
+    end
+
+    def best_rank_index(user, context)
+      Array(context[:user_groups][user.id])
+        .map { |name| context[:rank_index][name] }
+        .compact
+        .min || Float::INFINITY
     end
 
     def serialize_user(user, context)

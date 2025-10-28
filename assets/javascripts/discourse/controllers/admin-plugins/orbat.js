@@ -19,6 +19,10 @@ export default class AdminPluginsOrbatController extends Controller {
   @tracked previewState = "idle";
   @tracked disallow = false;
   @tracked isLoaded = false;
+  @tracked orbatEnabled = false;
+  @tracked orbatAdminOnly = false;
+  @tracked updatingEnabled = false;
+  @tracked updatingAdminOnly = false;
 
   formApi = null;
   _pendingFormSync = false;
@@ -32,6 +36,8 @@ export default class AdminPluginsOrbatController extends Controller {
 
     this.disallow = false;
     this.isLoaded = false;
+    this.orbatEnabled = !!this.siteSettings?.orbat_enabled;
+    this.orbatAdminOnly = !!this.siteSettings?.orbat_admin_only;
 
     let configuration = this.#prepareConfiguration(model?.configuration);
 
@@ -51,6 +57,10 @@ export default class AdminPluginsOrbatController extends Controller {
 
   get previewErrors() {
     return this.tree?.errors || [];
+  }
+
+  get adminOnlyDisabled() {
+    return !this.orbatEnabled || this.updatingAdminOnly;
   }
 
   @action
@@ -108,6 +118,68 @@ export default class AdminPluginsOrbatController extends Controller {
   }
 
   @action
+  async updateOrbatEnabled(event) {
+    if (this.updatingEnabled) {
+      return;
+    }
+
+    const checked = event?.target?.checked;
+    if (checked === undefined || checked === this.orbatEnabled) {
+      return;
+    }
+
+    this.updatingEnabled = true;
+    const previousValue = this.orbatEnabled;
+    this.orbatEnabled = checked;
+
+    try {
+      await this.#updateBooleanSetting("orbat_enabled", checked);
+      if (this.siteSettings) {
+        this.siteSettings.orbat_enabled = checked;
+      }
+    } catch (error) {
+      this.orbatEnabled = previousValue;
+      if (this.siteSettings) {
+        this.siteSettings.orbat_enabled = previousValue;
+      }
+      popupAjaxError(error);
+    } finally {
+      this.updatingEnabled = false;
+    }
+  }
+
+  @action
+  async updateOrbatAdminOnly(event) {
+    if (this.updatingAdminOnly) {
+      return;
+    }
+
+    const checked = event?.target?.checked;
+    if (checked === undefined || checked === this.orbatAdminOnly) {
+      return;
+    }
+
+    this.updatingAdminOnly = true;
+    const previousValue = this.orbatAdminOnly;
+    this.orbatAdminOnly = checked;
+
+    try {
+      await this.#updateBooleanSetting("orbat_admin_only", checked);
+      if (this.siteSettings) {
+        this.siteSettings.orbat_admin_only = checked;
+      }
+    } catch (error) {
+      this.orbatAdminOnly = previousValue;
+      if (this.siteSettings) {
+        this.siteSettings.orbat_admin_only = previousValue;
+      }
+      popupAjaxError(error);
+    } finally {
+      this.updatingAdminOnly = false;
+    }
+  }
+
+  @action
   async generatePreview(event) {
     event?.preventDefault();
 
@@ -156,12 +228,6 @@ export default class AdminPluginsOrbatController extends Controller {
   }
 
   @action
-  resetForm(draftData) {
-    this.data = { configuration: draftData?.configuration ?? "" };
-    this.notice = null;
-    this._queueFormSync();
-  }
-
   ensureConfigurationValid(configuration) {
     if (!this.formApi) {
       return true;
@@ -207,6 +273,15 @@ export default class AdminPluginsOrbatController extends Controller {
 
     const payload = { ...this.data };
     this.formApi.setProperties?.(payload);
+  }
+
+  async #updateBooleanSetting(setting, value) {
+    await ajax(`/admin/site_settings/${setting}`, {
+      type: "PUT",
+      data: {
+        [setting]: value ? "true" : "false",
+      },
+    });
   }
 
   #prepareConfiguration(raw) {

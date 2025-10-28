@@ -29,10 +29,12 @@ en:
         restored: "Default ORBAT configuration restored."
         preview_failed: "Unable to generate preview. Please check the configuration."
       actions:
-        preview: "Preview changes"
-        reset: "Revert changes"
+        preview_orbat: "Preview ORBAT"
         save: "Save configuration"
         restore_default: "Restore default"
+      settings:
+        enabled: "Enable the ORBAT plugin"
+        admin_only: "Restrict ORBAT visibility to admins"
     static:
       orbat:
         title: "ORBAT"
