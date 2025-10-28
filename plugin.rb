@@ -1,5 +1,5 @@
 # name: discourse-orbat
-# version: 0.9.0
+# version: 0.9.1
 # about: 16AA ORBAT plugin for Discourse
 # author: OpenAI & Darojax
 
