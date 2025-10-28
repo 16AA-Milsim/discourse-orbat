@@ -5,6 +5,8 @@ import DiscourseURL from "discourse/lib/url";
 import { formatUsername } from "discourse/lib/utilities";
 import { i18n } from "discourse-i18n";
 import { getURLWithCDN } from "discourse/lib/get-url";
+import { tracked } from "@glimmer/tracking";
+import { htmlSafe } from "@ember/template";
 
 /**
  * @component orbat-node
@@ -12,6 +14,14 @@ import { getURLWithCDN } from "discourse/lib/get-url";
  * @param {Object} display - Display preferences inherited from root
  */
 export default class OrbatNode extends Component {
+  @tracked labelMeasuredWidth = null;
+
+  _labelTextElement = null;
+  _measureFrame = null;
+  _resizeObserver = null;
+  _measureCanvas = null;
+  _measureContext = null;
+
   get node() {
     return this.args.node || {};
   }
@@ -61,6 +71,18 @@ export default class OrbatNode extends Component {
 
   get hasIcon() {
     return !!this.icon;
+  }
+
+  get maxLabelWidth() {
+    return this.hasIcon ? 72 : 96;
+  }
+
+  get labelTextStyle() {
+    if (!this.labelMeasuredWidth) {
+      return null;
+    }
+
+    return htmlSafe(`width: ${this.labelMeasuredWidth}px;`);
   }
 
   get userColumns() {
@@ -172,5 +194,276 @@ export default class OrbatNode extends Component {
 
     event.preventDefault();
     DiscourseURL.routeTo(destination);
+  }
+
+  @action
+  registerLabelText(element) {
+    this._labelTextElement = element;
+    this._observeLabelElement(element);
+    this._scheduleLabelMeasure();
+
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready.then(() => this._scheduleLabelMeasure());
+    }
+  }
+
+  @action
+  refreshLabelText(element) {
+    if (element) {
+      this._labelTextElement = element;
+      this._observeLabelElement(element);
+    }
+    this._scheduleLabelMeasure();
+  }
+
+  @action
+  unregisterLabelText(element) {
+    if (this._labelTextElement === element) {
+      this._labelTextElement = null;
+    }
+    this.labelMeasuredWidth = null;
+    if (this._measureFrame && typeof window !== "undefined") {
+      window.cancelAnimationFrame?.(this._measureFrame);
+      this._measureFrame = null;
+    }
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+  }
+
+  _scheduleLabelMeasure() {
+    if (!this._labelTextElement || typeof window === "undefined") {
+      return;
+    }
+
+    if (this._measureFrame) {
+      window.cancelAnimationFrame?.(this._measureFrame);
+    }
+
+    this._measureFrame = window.requestAnimationFrame?.(() => {
+      this._measureFrame = null;
+      this._measureAndStoreWidth();
+    });
+
+    if (!this._measureFrame) {
+      this._measureAndStoreWidth();
+    }
+  }
+
+  _measureAndStoreWidth() {
+    const element = this._labelTextElement;
+
+    if (!element?.isConnected) {
+      if (this.labelMeasuredWidth) {
+        this.labelMeasuredWidth = null;
+      }
+      return;
+    }
+
+    let maxLineWidth = 0;
+    const computed = window.getComputedStyle?.(element);
+    const content = element.textContent?.trim() || "";
+
+    if (!computed || !content) {
+      if (this.labelMeasuredWidth) {
+        this.labelMeasuredWidth = null;
+      }
+      return;
+    }
+
+    const lineCount = this._estimateLineCount(element, computed);
+
+    if (lineCount && lineCount <= 1) {
+      if (this.labelMeasuredWidth) {
+        this.labelMeasuredWidth = null;
+      }
+      return;
+    }
+
+    maxLineWidth = this._calculateWrappedWidth(content, computed, this.maxLabelWidth);
+
+    if (!maxLineWidth) {
+      if (this.labelMeasuredWidth) {
+        this.labelMeasuredWidth = null;
+      }
+      return;
+    }
+
+    const nextWidth = Math.min(Math.ceil(maxLineWidth), this.maxLabelWidth);
+
+    if (!nextWidth) {
+      if (this.labelMeasuredWidth) {
+        this.labelMeasuredWidth = null;
+      }
+      return;
+    }
+
+    if (this.labelMeasuredWidth !== nextWidth) {
+      this.labelMeasuredWidth = nextWidth;
+    }
+  }
+
+  _observeLabelElement(element) {
+    if (typeof ResizeObserver !== "function" || !element) {
+      return;
+    }
+
+    if (!this._resizeObserver) {
+      this._resizeObserver = new ResizeObserver(() => {
+        this._scheduleLabelMeasure();
+      });
+    }
+
+    this._resizeObserver.disconnect();
+    this._resizeObserver.observe(element);
+  }
+
+  _calculateWrappedWidth(text, computedStyle, maxWidth) {
+    const ctx = this._getMeasureContext();
+    if (!ctx || !text) {
+      return 0;
+    }
+
+    const transformed = this._applyTextTransform(text, computedStyle.textTransform);
+    const words = transformed.split(/\s+/).filter(Boolean);
+
+    if (!words.length) {
+      return 0;
+    }
+
+    ctx.font = computedStyle.font || `${computedStyle.fontWeight} ${computedStyle.fontSize} ${computedStyle.fontFamily}`;
+
+    const letterSpacing = this._parseLetterSpacing(computedStyle.letterSpacing);
+
+    const measureString = (value) => {
+      if (!value) {
+        return 0;
+      }
+      const metrics = ctx.measureText(value);
+      const baseWidth = metrics?.width || 0;
+      const spacingWidth = letterSpacing * Math.max(value.length - 1, 0);
+      return baseWidth + spacingWidth;
+    };
+
+    let currentLine = "";
+    let currentWidth = 0;
+    let widestLine = 0;
+
+    for (let index = 0; index < words.length; index++) {
+      const word = words[index];
+      const candidate = currentLine ? `${currentLine} ${word}` : word;
+      let candidateWidth = measureString(candidate);
+
+      if (candidateWidth <= maxWidth || !currentLine) {
+        currentLine = candidate;
+        currentWidth = Math.min(candidateWidth, maxWidth);
+      } else {
+        widestLine = Math.max(widestLine, currentWidth);
+        currentLine = word;
+        candidateWidth = measureString(word);
+        currentWidth = Math.min(candidateWidth, maxWidth);
+      }
+    }
+
+    widestLine = Math.max(widestLine, currentWidth);
+    return widestLine;
+  }
+
+  _applyTextTransform(text, transform) {
+    if (!text) {
+      return "";
+    }
+
+    switch ((transform || "").toLowerCase()) {
+      case "uppercase":
+        return text.toUpperCase();
+      case "lowercase":
+        return text.toLowerCase();
+      case "capitalize":
+        return text
+          .split(" ")
+          .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+          .join(" ");
+      default:
+        return text;
+    }
+  }
+
+  _parseLetterSpacing(value) {
+    if (!value || value === "normal") {
+      return 0;
+    }
+
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  _getMeasureContext() {
+    if (typeof document === "undefined") {
+      return null;
+    }
+
+    if (!this._measureContext) {
+      this._measureCanvas = document.createElement("canvas");
+      this._measureContext = this._measureCanvas.getContext("2d");
+    }
+
+    return this._measureContext;
+  }
+
+  _estimateLineCount(element, computedStyle) {
+    if (!element || !computedStyle) {
+      return null;
+    }
+
+    const height = element.offsetHeight || element.scrollHeight || 0;
+    if (!height) {
+      return null;
+    }
+
+    const lineHeight = this._parseLineHeight(
+      computedStyle.lineHeight,
+      computedStyle.fontSize
+    );
+
+    if (!lineHeight) {
+      return null;
+    }
+
+    const rawCount = height / lineHeight;
+
+    if (!rawCount || !Number.isFinite(rawCount)) {
+      return null;
+    }
+
+    return Math.max(1, Math.round(rawCount));
+  }
+
+  _parseLineHeight(value, fontSizeValue) {
+    if (!value) {
+      return null;
+    }
+
+    if (value === "normal") {
+      const fontSize = parseFloat(fontSizeValue);
+      return Number.isFinite(fontSize) ? fontSize * 1.2 : null;
+    }
+
+    const numeric = parseFloat(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      return null;
+    }
+
+    if (value.endsWith("px")) {
+      return numeric;
+    }
+
+    const fontSize = parseFloat(fontSizeValue);
+    if (!Number.isFinite(fontSize) || fontSize <= 0) {
+      return null;
+    }
+
+    return numeric * fontSize;
   }
 }
