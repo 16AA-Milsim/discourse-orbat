@@ -177,7 +177,9 @@ class ::Orbat::Service
         "description" => definition["description"],
         "theme" => definition["theme"] || "neutral",
         "badge" => definition["badge"],
+        "badgeWidth" => definition["badgeWidth"] || definition["badge_width"],
         "icon" => definition["icon"],
+        "labelFontSize" => definition["labelFontSize"] || definition["label_font_size"],
         "layout" => normalize_layout(definition["layout"]),
         "users" => users,
         "placeholder" => placeholder,
@@ -188,6 +190,7 @@ class ::Orbat::Service
         "meta" => {
           "sourceGroups" => meta_groups,
           "alwaysShow" => !!definition["alwaysShow"],
+          "hideNode" => !!definition["hideNode"],
         },
       }
     end

@@ -11,52 +11,56 @@
     </a>
   </div>
 
-  <div class="orbat-page__masthead">
-    <img
-      class="orbat-page__masthead-logo"
-      src={{this.mastheadLogo}}
-      alt="16 Air Assault Brigade insignia"
-      width="50"
-      height="60"
-    />
-    <div class="orbat-page__masthead-text">
-      {{#if this.tree.title}}
-        <h1 class="orbat-page__title">
-          {{this.tree.title}}
-        </h1>
+  <div class="orbat-page__canvas">
+    <div class="orbat-page__canvas-inner">
+      {{#if this.hasErrors}}
+        <section class="orbat-alert">
+          <h2 class="orbat-alert__title">
+            {{i18n "orbat.page.errors_title"}}
+          </h2>
+          <ul class="orbat-alert__list">
+            {{#each this.errors as |error|}}
+              <li>{{error}}</li>
+            {{/each}}
+          </ul>
+        </section>
       {{/if}}
-      {{#if this.tree.subtitle}}
-        <p class="orbat-page__subtitle">
-          {{this.tree.subtitle}}
-        </p>
-      {{/if}}
+
+      <nav class="orbat-tree">
+        <div class="orbat-tree__masthead orbat-page__masthead">
+          <img
+            class="orbat-page__masthead-logo"
+            src={{this.mastheadLogo}}
+            alt="16 Air Assault Brigade insignia"
+            width="50"
+            height="60"
+          />
+          <div class="orbat-page__masthead-text">
+            {{#if this.tree.title}}
+              <h1 class="orbat-page__title">
+                {{this.tree.title}}
+              </h1>
+            {{/if}}
+            {{#if this.tree.subtitle}}
+              <p class="orbat-page__subtitle">
+                {{this.tree.subtitle}}
+              </p>
+            {{/if}}
+          </div>
+        </div>
+
+        {{#if this.hasNodes}}
+          <ul class={{concat "orbat-tree__list " this.rootLayoutClass}} style={{this.rootStyle}}>
+            {{#each this.rootNodes key="id" as |node|}}
+              <OrbatBranch @node={{node}} @display={{this.display}} />
+            {{/each}}
+          </ul>
+        {{else}}
+          <div class="orbat-empty">
+            {{i18n "orbat.page.no_data"}}
+          </div>
+        {{/if}}
+      </nav>
     </div>
   </div>
-
-  {{#if this.hasErrors}}
-    <section class="orbat-alert">
-      <h2 class="orbat-alert__title">
-        {{i18n "orbat.page.errors_title"}}
-      </h2>
-      <ul class="orbat-alert__list">
-        {{#each this.errors as |error|}}
-          <li>{{error}}</li>
-        {{/each}}
-      </ul>
-    </section>
-  {{/if}}
-
-  {{#if this.hasNodes}}
-    <nav class="orbat-tree">
-      <ul class={{concat "orbat-tree__list " this.rootLayoutClass}} style={{this.rootStyle}}>
-        {{#each this.rootNodes key="id" as |node|}}
-          <OrbatBranch @node={{node}} @display={{this.display}} />
-        {{/each}}
-      </ul>
-    </nav>
-  {{else}}
-    <div class="orbat-empty">
-      {{i18n "orbat.page.no_data"}}
-    </div>
-  {{/if}}
 </div>

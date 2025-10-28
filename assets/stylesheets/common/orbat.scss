@@ -67,7 +67,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 14px;
   text-align: left;
 }
 
@@ -79,7 +79,6 @@
 .orbat-page__masthead-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .orbat-page__title {
@@ -306,10 +305,14 @@
 
 .orbat-node__header {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  width: 100%;
+  gap: 4px;
+  margin: 5px auto 4px auto;
+  width: max-content;
+  max-width: 100%;
+  text-align: center;
 }
 
 .orbat-node__title {
@@ -317,13 +320,21 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  width: max-content;
   max-width: 100%;
+}
+
+.orbat-node__badge {
+  margin-top: 2px;
+  width: var(--orbat-node-badge-width, 40px);
+  height: auto;
+  display: block;
 }
 
 .orbat-node__icon {
   width: 12px;
+  height: auto;
   object-fit: contain;
-  flex-shrink: 0;
 }
 
 .orbat-node__label {
@@ -334,6 +345,23 @@
   text-transform: uppercase;
   color: var(--primary-800);
   text-align: center;
+  line-height: 1.2;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  margin-top: 1px;
+}
+
+.orbat-node__label-text {
+  display: inline-block;
+  text-align: left;
+  line-height: 1.2;
+  max-width: 96px;
+}
+
+.orbat-node__header--with-icon .orbat-node__label-text {
+  max-width: 72px;
 }
 
 .orbat-node__description {

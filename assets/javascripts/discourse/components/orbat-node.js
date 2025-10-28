@@ -21,6 +21,7 @@ export default class OrbatNode extends Component {
   _resizeObserver = null;
   _measureCanvas = null;
   _measureContext = null;
+  _singleLineLabelAdjustment = false;
 
   get node() {
     return this.args.node || {};
@@ -59,10 +60,16 @@ export default class OrbatNode extends Component {
   }
 
   get wrapperClass() {
-    return [
+    const classes = [
       "orbat-node",
       `orbat-node--theme-${this.node.theme || "neutral"}`,
-    ].join(" ");
+    ];
+
+    if (this.isNodeHidden) {
+      classes.push("orbat-node--hidden");
+    }
+
+    return classes.join(" ");
   }
 
   get icon() {
@@ -73,16 +80,79 @@ export default class OrbatNode extends Component {
     return !!this.icon;
   }
 
+  get badge() {
+    return this.resolveIcon(this.node.badge);
+  }
+
+  get hasBadge() {
+    return !!this.badge;
+  }
+
+  get hideNode() {
+    return !!(this.node.hideNode ?? this.node.meta?.hideNode);
+  }
+
+  get isNodeHidden() {
+    return !!this.hideNode;
+  }
+
   get maxLabelWidth() {
     return this.hasIcon ? 72 : 96;
   }
 
-  get labelTextStyle() {
-    if (!this.labelMeasuredWidth) {
+  get badgeWidth() {
+    const raw = this.node.badgeWidth ?? this.node.badge_width;
+    const width = parseInt(raw, 10);
+    return Number.isFinite(width) && width > 0 ? width : null;
+  }
+
+  get badgeStyle() {
+    if (!this.badgeWidth) {
       return null;
     }
 
-    return htmlSafe(`width: ${this.labelMeasuredWidth}px;`);
+    return htmlSafe(
+      [
+        `width: ${this.badgeWidth}px`,
+        `--orbat-node-badge-width: ${this.badgeWidth}px`,
+      ].join("; ")
+    );
+  }
+
+  get labelFontSize() {
+    const raw = this.node.labelFontSize ?? this.node.label_font_size;
+    const size = parseInt(raw, 10);
+    return Number.isFinite(size) && size > 0 ? size : null;
+  }
+
+  get labelContainerStyle() {
+    if (!this.labelFontSize) {
+      return null;
+    }
+
+    return htmlSafe(`font-size: ${this.labelFontSize}px;`);
+  }
+
+  get labelTextStyle() {
+    const declarations = [];
+
+    if (this.labelFontSize) {
+      declarations.push(`font-size: ${this.labelFontSize}px`);
+    }
+
+    if (this.labelMeasuredWidth) {
+      declarations.push(`width: ${this.labelMeasuredWidth}px`);
+    }
+
+    if (this._singleLineLabelAdjustment) {
+      declarations.push("transform: translateY(1px)");
+    }
+
+    if (!declarations.length) {
+      return null;
+    }
+
+    return htmlSafe(`${declarations.join("; ")};`);
   }
 
   get userColumns() {
@@ -222,6 +292,7 @@ export default class OrbatNode extends Component {
       this._labelTextElement = null;
     }
     this.labelMeasuredWidth = null;
+    this._singleLineLabelAdjustment = false;
     if (this._measureFrame && typeof window !== "undefined") {
       window.cancelAnimationFrame?.(this._measureFrame);
       this._measureFrame = null;
@@ -258,6 +329,7 @@ export default class OrbatNode extends Component {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
+      this._singleLineLabelAdjustment = false;
       return;
     }
 
@@ -269,12 +341,14 @@ export default class OrbatNode extends Component {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
+      this._singleLineLabelAdjustment = false;
       return;
     }
 
     const lineCount = this._estimateLineCount(element, computed);
+    this._singleLineLabelAdjustment = !!lineCount && lineCount <= 1;
 
-    if (lineCount && lineCount <= 1) {
+    if (this._singleLineLabelAdjustment) {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
@@ -287,6 +361,7 @@ export default class OrbatNode extends Component {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
+      this._singleLineLabelAdjustment = false;
       return;
     }
 
@@ -296,6 +371,7 @@ export default class OrbatNode extends Component {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
+      this._singleLineLabelAdjustment = false;
       return;
     }
 

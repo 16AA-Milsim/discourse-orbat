@@ -5,16 +5,20 @@ import { ajax } from "discourse/lib/ajax";
 import { scheduleOnce } from "@ember/runloop";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { i18n } from "discourse-i18n";
+import { service } from "@ember/service";
 
 /**
  * @class AdminPluginsOrbatController
  */
 export default class AdminPluginsOrbatController extends Controller {
+  @service siteSettings;
+
   @tracked data = { configuration: "" };
   @tracked tree = null;
   @tracked notice = null;
   @tracked previewState = "idle";
   @tracked disallow = false;
+  @tracked isLoaded = false;
 
   formApi = null;
   _pendingFormSync = false;
@@ -22,16 +26,26 @@ export default class AdminPluginsOrbatController extends Controller {
   setup(model) {
     if (model?.disallow) {
       this.disallow = true;
+      this.isLoaded = false;
       return;
     }
 
     this.disallow = false;
+    this.isLoaded = false;
+
+    let configuration = this.#prepareConfiguration(model?.configuration);
+
+    if (!configuration && this.siteSettings?.orbat_json) {
+      configuration = this.#prepareConfiguration(this.siteSettings.orbat_json);
+    }
+
     this.data = {
-      configuration: model?.configuration || "",
+      configuration,
     };
     this.tree = model?.tree || null;
     this.notice = null;
     this.previewState = "idle";
+    this.isLoaded = true;
     this._queueFormSync();
   }
 
@@ -193,5 +207,30 @@ export default class AdminPluginsOrbatController extends Controller {
 
     const payload = { ...this.data };
     this.formApi.setProperties?.(payload);
+  }
+
+  #prepareConfiguration(raw) {
+    if (!raw) {
+      return "";
+    }
+
+    if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      if (trimmed.length === 0) {
+        return "";
+      }
+
+      try {
+        return JSON.stringify(JSON.parse(raw), null, 2);
+      } catch (error) {
+        return raw;
+      }
+    }
+
+    try {
+      return JSON.stringify(raw, null, 2);
+    } catch (error) {
+      return "";
+    }
   }
 }

@@ -1,5 +1,6 @@
 # name: discourse-orbat
-# version: 0.1
+# version: 0.9.0
+# about: 16AA ORBAT plugin for Discourse
 # author: OpenAI & Darojax
 
 # frozen_string_literal: true

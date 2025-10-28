@@ -1,2 +1,2 @@
 # TODO
-- Sidebar is currently hidden on the entire forum. Work out how to hide it on the ORBAT page only.
+- When there is a single child to a parent the connector line doesn't align properly every other pixel width of the screen.
