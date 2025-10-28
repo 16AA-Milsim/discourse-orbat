@@ -9,17 +9,77 @@ export default {
 
   initialize() {
     withPluginApi("1.8.0", (api) => {
+      const currentUser = api.getCurrentUser?.();
+      const siteSettings = api.siteSettings;
+
+      const isTruthy = (value) => {
+        if (value === true) {
+          return true;
+        }
+
+        if (typeof value === "string") {
+          const normalized = value.toLowerCase();
+          return normalized === "true" || normalized === "t" || normalized === "1";
+        }
+
+        return false;
+      };
+
+      const isEnabled = isTruthy(siteSettings?.orbat_enabled);
+      const adminOnly = isTruthy(siteSettings?.orbat_admin_only);
+
+      if (!isEnabled) {
+        return;
+      }
+
+      if (adminOnly && !currentUser?.admin) {
+        return;
+      }
+
       const isOrbatPath = (path = "") =>
         path === ORBAT_PATH_PREFIX || path.startsWith(`${ORBAT_PATH_PREFIX}/`);
 
-      const toggleClass = () => {
+      const applyWrapperOverrides = (isOrbat) => {
+        const wrapper = document.querySelector("#main-outlet-wrapper");
+        if (!wrapper) {
+          if (isOrbat) {
+            requestAnimationFrame(() => applyWrapperOverrides(isOrbat));
+          }
+          return;
+        }
+
+        const removeOverrides = () => {
+          wrapper.style.removeProperty("--d-sidebar-width");
+          wrapper.style.removeProperty("--d-main-content-gap");
+          wrapper.style.removeProperty("grid-template-columns");
+          wrapper.style.removeProperty("gap");
+          wrapper.style.removeProperty("padding-left");
+        };
+
+        if (isOrbat) {
+          wrapper.style.setProperty("--d-sidebar-width", "0", "important");
+          wrapper.style.setProperty("--d-main-content-gap", "0", "important");
+          wrapper.style.setProperty(
+            "grid-template-columns",
+            "minmax(0, 1fr)",
+            "important"
+          );
+          wrapper.style.setProperty("gap", "0", "important");
+          wrapper.style.setProperty("padding-left", "0", "important");
+        } else {
+          removeOverrides();
+        }
+      };
+
+      const toggleLayout = () => {
         const path = window.location?.pathname || "";
         const isOrbat = isOrbatPath(path);
         document.body.classList.toggle("orbat-fullwidth", isOrbat);
+        applyWrapperOverrides(isOrbat);
       };
 
-      api.onPageChange(toggleClass);
-      toggleClass();
+      api.onPageChange(toggleLayout);
+      toggleLayout();
 
       if (!hasClickHandler) {
         const interceptOrbatLinks = (event) => {

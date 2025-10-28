@@ -1,7 +1,7 @@
 # name: discourse-orbat
-# version: 0.9.1
+# version: 0.9.2
 # about: 16AA ORBAT plugin for Discourse
-# author: OpenAI & Darojax
+# authors: OpenAI & Darojax
 
 # frozen_string_literal: true
 
@@ -12,6 +12,7 @@ end
 require_relative "lib/orbat/service"
 
 register_asset "stylesheets/common/orbat.scss"
+enabled_site_setting :orbat_enabled
 add_admin_route "orbat_admin.nav_title", "orbat"
 
 after_initialize do
@@ -19,7 +20,13 @@ after_initialize do
   on(:group_user_destroyed){ ::Orbat::Service.clear_cache }
 
   on(:site_setting_changed) do |name, _old_value, _new_value|
-    if %i[orbat_json orbat_cache_ttl orbat_hide_hidden_groups].include?(name.to_sym)
+    if %i[
+      orbat_json
+      orbat_cache_ttl
+      orbat_hide_hidden_groups
+      orbat_enabled
+      orbat_admin_only
+    ].include?(name.to_sym)
       ::Orbat::Service.clear_cache
     end
   end
@@ -27,6 +34,7 @@ after_initialize do
   module ::Orbat
     class PublicController < ::ApplicationController
       requires_login false
+      before_action :ensure_orbat_visible
 
       def index
         render html: "", layout: "application"
@@ -34,6 +42,17 @@ after_initialize do
 
       def data
         render_json_dump(::Orbat::Service.cached_tree)
+      end
+
+      private
+
+      def ensure_orbat_visible
+        raise Discourse::NotFound unless SiteSetting.orbat_enabled
+
+        return unless SiteSetting.orbat_admin_only
+        return if current_user&.admin?
+
+        raise Discourse::NotFound
       end
     end
 

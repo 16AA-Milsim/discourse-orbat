@@ -40,34 +40,11 @@
   margin: 0 auto;
 }
 
-.orbat-page__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--primary-700);
-  font-weight: 600;
-  text-decoration: none;
-  padding: 4px 12px 4px 0;
-  border-radius: 999px;
-  transition: color 0.2s ease, background 0.2s ease;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  &:hover,
-  &:focus {
-    color: var(--primary-900);
-    background: var(--primary-100);
-  }
-}
-
 .orbat-page__masthead {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 10px;
   text-align: left;
 }
 
@@ -135,6 +112,7 @@
 .orbat-tree__list {
   display: flex;
   justify-content: center;
+  gap: 12px;
   width: max-content;
   margin: 0 auto;
 }
@@ -146,15 +124,6 @@
 .orbat-tree__list--column {
   flex-direction: column;
   align-items: center;
-}
-
-.orbat-tree__list > .orbat-branch__item {
-  padding-top: 0;
-}
-
-.orbat-tree__list > .orbat-branch__item::before,
-.orbat-tree__list > .orbat-branch__item::after {
-  display: none;
 }
 
 .orbat-branch__item {
@@ -339,7 +308,7 @@
 
 .orbat-node__label {
   margin: 0;
-  font-size: 7px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.15px;
   text-transform: uppercase;
@@ -373,8 +342,9 @@
 .orbat-node__users {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
   justify-content: center;
+  margin-top: 1px;
 }
 
 .orbat-node__users-column {
@@ -438,4 +408,26 @@ body.orbat-fullwidth #main-outlet .topic-body {
   max-width: unset !important;
   width: 100% !important;
   padding: 0 !important;
+}
+
+.orbat-admin__settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.orbat-setting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-weight: 600;
+}
+
+.orbat-setting__label {
+  line-height: 1.4;
 }
