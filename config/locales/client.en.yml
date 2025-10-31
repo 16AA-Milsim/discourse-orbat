@@ -20,9 +20,10 @@ en:
         heading: "Configuration"
         instructions: "Update the JSON structure to change units, hierarchy, and selection rules."
         help: "Use the preview to verify the layout before saving. Members are resolved based on group membership."
+        guide_summary: "JSON reference & tips"
       preview:
         heading: "Live Preview"
-        unavailable: "Preview will appear here after you generate it."
+        unavailable: "Preview will appear below after you generate it."
         loading: "Generating preview…"
       notices:
         saved: "ORBAT configuration saved."

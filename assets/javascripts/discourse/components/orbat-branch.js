@@ -29,9 +29,14 @@ export default class OrbatBranch extends Component {
     return this.children.length > 1;
   }
 
+  get hasSingleChild() {
+    return this.hasChildren && !this.hasMultipleChildren;
+  }
+
   @action
   setupElement(element) {
     this.element = element;
+    this._readyNotified = false;
     this.#observeSize(element);
     scheduleOnce("afterRender", this, this.#updateConnectorMetrics);
   }
@@ -43,6 +48,7 @@ export default class OrbatBranch extends Component {
       return;
     }
 
+    this._readyNotified = false;
     scheduleOnce("afterRender", this, this.#updateConnectorMetrics);
   }
 
@@ -112,6 +118,8 @@ export default class OrbatBranch extends Component {
     );
     element.style.setProperty("--orbat-connector-left-gap", `${leftGap}px`);
     element.style.setProperty("--orbat-connector-right-gap", `${rightGap}px`);
+
+    this.#notifyReadyOnce();
   }
 
   #getHorizontalGap(parentElement, elementStyles) {
@@ -159,6 +167,19 @@ export default class OrbatBranch extends Component {
     }
 
     return Math.abs(sibling.offsetTop - element.offsetTop) < 1;
+  }
+
+  #notifyReadyOnce() {
+    if (this._readyNotified) {
+      return;
+    }
+
+    this._readyNotified = true;
+
+    const callback = this.args.notifyReady;
+    if (typeof callback === "function") {
+      callback();
+    }
   }
 
   #teardown() {

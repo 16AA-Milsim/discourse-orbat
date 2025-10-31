@@ -15,7 +15,21 @@
         </section>
       {{/if}}
 
-      <nav class="orbat-tree">
+      <div
+        class={{concat "orbat-tree__container" (unless this.isReady " orbat-tree__container--loading")}}
+        {{did-insert this.registerRoot}}
+        {{did-update this.resetReady this.tree.generatedAt}}
+      >
+        {{#unless this.isReady}}
+          <div class="orbat-tree__loader">
+            <ConditionalLoadingSpinner @size="large" />
+          </div>
+        {{/unless}}
+
+        <nav
+          class="orbat-tree"
+          style={{unless this.isReady "display:none;"}}
+        >
         <div class="orbat-tree__masthead orbat-page__masthead">
           <img
             class="orbat-page__masthead-logo"
@@ -39,17 +53,72 @@
         </div>
 
         {{#if this.hasNodes}}
-          <ul class={{concat "orbat-tree__list " this.rootLayoutClass}} style={{this.rootStyle}}>
-            {{#each this.rootNodes key="id" as |node|}}
-              <OrbatBranch @node={{node}} @display={{this.display}} />
-            {{/each}}
-          </ul>
+          {{#if this.sections.length}}
+            <div class="orbat-tree__sections">
+              {{#each this.sections key="id" as |sectionGroup|}}
+                <section
+                  class="orbat-tree__section"
+                  data-orbat-section-id={{sectionGroup.id}}
+                >
+                  {{#if sectionGroup.hasHeading}}
+                    <header class="orbat-tree__section-header">
+                      {{#if sectionGroup.title}}
+                        <h2 class="orbat-tree__section-title">
+                          {{sectionGroup.title}}
+                        </h2>
+                      {{/if}}
+                      {{#if sectionGroup.subtitle}}
+                        <p class="orbat-tree__section-subtitle">
+                          {{sectionGroup.subtitle}}
+                        </p>
+                      {{/if}}
+                      {{#if sectionGroup.description}}
+                        <p class="orbat-tree__section-description">
+                          {{sectionGroup.description}}
+                        </p>
+                      {{/if}}
+                    </header>
+                  {{/if}}
+
+                  {{#if sectionGroup.nodes.length}}
+                    <ul
+                      class={{concat "orbat-tree__list " sectionGroup.layoutClass}}
+                      style={{sectionGroup.listStyle}}
+                    >
+                      {{#each sectionGroup.nodes key="id" as |node|}}
+                        <OrbatBranch
+                          @node={{node}}
+                          @display={{this.display}}
+                          @notifyReady={{this.handleBranchReady}}
+                        />
+                      {{/each}}
+                    </ul>
+                  {{else if sectionGroup.showEmpty}}
+                    <div class="orbat-empty orbat-tree__section-empty">
+                      {{sectionGroup.emptyLabel}}
+                    </div>
+                  {{/if}}
+                </section>
+              {{/each}}
+            </div>
+          {{else}}
+            <ul class={{concat "orbat-tree__list " this.rootLayoutClass}} style={{this.rootStyle}}>
+              {{#each this.rootNodes key="id" as |node|}}
+                <OrbatBranch
+                  @node={{node}}
+                  @display={{this.display}}
+                  @notifyReady={{this.handleBranchReady}}
+                />
+              {{/each}}
+            </ul>
+          {{/if}}
         {{else}}
           <div class="orbat-empty">
             {{i18n "orbat.page.no_data"}}
           </div>
         {{/if}}
       </nav>
+      </div>
     </div>
   </div>
 </div>

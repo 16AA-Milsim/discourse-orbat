@@ -54,10 +54,469 @@
               @title={{i18n "orbat_admin.editor.heading"}}
               @subtitle={{i18n "orbat_admin.editor.instructions"}}
             >
+              <details class="orbat-admin__guide">
+                <summary>{{i18n "orbat_admin.editor.guide_summary"}}</summary>
+                <div class="orbat-admin__guide-body">
+                  <p>
+                    Build the ORBAT by combining high-level metadata with a
+                    <code>nodes</code> array that defines each unit. Every node
+                    can resolve users from groups, show placeholders, and nest
+                    children to create the tree.
+                  </p>
+
+                  <h4>Top-level keys</h4>
+                  <ul class="orbat-admin__guide-list">
+                    <li>
+                      <code>title</code> and <code>subtitle</code> drive the
+                      masthead text.
+                    </li>
+                    <li>
+                      <code>banner</code> optionally shows an image (relative to
+                      the plugin’s <code>public/images</code> directory or a full
+                      URL).
+                    </li>
+                    <li>
+                      <code>display</code> controls global behaviour (spacing,
+                      columns, empty placeholders, etc.).
+                    </li>
+                    <li>
+                      <code>rankPriority</code> and
+                      <code>groupPriority</code> influence ordering when sorting
+                      members.
+                    </li>
+                    <li>
+                      <code>nodes</code> is an array of unit definitions; the
+                      order you provide is preserved on the root level unless you
+                      group them via <code>display.rootSections</code>.
+                    </li>
+                  </ul>
+
+                  <h4>Display options</h4>
+                  <dl class="orbat-admin__guide-dl">
+                    <dt><code>rootLayout</code></dt>
+                    <dd>
+                      <code>"row"</code> (default) or <code>"column"</code>; sets
+                      how top-level nodes are laid out.
+                    </dd>
+                    <dt><code>rootColumns</code></dt>
+                    <dd>
+                      When set, constrains the number of columns for root rows
+                      (e.g. <code>3</code>).
+                    </dd>
+                    <dt><code>gap</code></dt>
+                    <dd>
+                      Accepts tokens <code>"xs"</code>, <code>"sm"</code>,
+                      <code>"md"</code>, <code>"lg"</code>, <code>"xl"</code>, or
+                      a pixel value (e.g. <code>"32px"</code>).
+                    </dd>
+                    <dt><code>rootSections</code></dt>
+                    <dd>
+                      Optional array to add headings and custom layouts for code
+                      prefixes. Each entry supports:
+                      <code>prefixes</code>, <code>title</code>,
+                      <code>subtitle</code>, <code>description</code>,
+                      <code>layout</code>, <code>showEmpty</code>, and
+                      <code>emptyLabel</code>.
+                    </dd>
+                  </dl>
+
+                  <h4>Node structure</h4>
+                  <p>
+                    Each node requires a unique <code>id</code> and <code>code</code>.
+                    Dots inside the code (for example <code>"1.2.3"</code>)
+                    automatically establish parent/child relationships. Common
+                    properties include:
+                  </p>
+                  <ul class="orbat-admin__guide-list">
+                    <li><code>label</code>: visible title for the unit.</li>
+                    <li>
+                      <code>theme</code>: optional styling token (e.g.
+                      <code>"company"</code>, <code>"platoon"</code>).
+                    </li>
+                    <li>
+                      <code>badge</code>, <code>icon</code>,
+                      <code>labelFontSize</code>: control visual extras.
+                    </li>
+                    <li>
+                      <code>layout</code>: object with <code>type</code>
+                      (<code>"row"</code> or <code>"column"</code>), optional
+                      <code>gap</code>, <code>align</code>,
+                      <code>justify</code>, <code>columns</code>, and
+                      <code>wrap</code>.
+                    </li>
+                    <li>
+                      <code>select</code>: resolves users. Use
+                      <code>any</code>, <code>all</code>, <code>not</code>,
+                      <code>sort</code> (<code>"rankPriority"</code> or
+                      <code>"joined"</code>), <code>limit</code>,
+                      <code>includeHidden</code>, and <code>placeholder</code>.
+                    </li>
+                    <li>
+                      <code>children</code>: array of nested nodes using the same
+                      structure.
+                    </li>
+                    <li>
+                      <code>alwaysShow</code> or <code>hideNode</code> to force
+                      visibility or suppress the card while leaving connectors.
+                    </li>
+                  </ul>
+
+                  <h4>Starter template</h4>
+                  <pre class="orbat-admin__guide-code"><code class="lang-json">{
+  "title": "ORBAT",
+  "subtitle": "Unit Name",
+  "banner": null,
+  "display": {
+    "showEmpty": true,
+    "hideGroupLinks": false,
+    "showAvatars": true,
+    "maxPerColumn": 12,
+    "rootLayout": "row",
+    "rootColumns": 2,
+    "gap": "md",
+    "emptyLabel": "-",
+    "rootSections": [
+      { "prefixes": ["1"], "title": "Primary Formation" },
+      { "prefixes": ["2"], "title": "Support Assets", "subtitle": "Sustainment & specialists" }
+    ]
+  },
+  "rankPriority": [
+    "Major",
+    "Captain",
+    "Lieutenant",
+    "Sergeant",
+    "Corporal"
+  ],
+  "groupPriority": [
+    "HQ_Command",
+    "Support_Command"
+  ],
+  "nodes": [
+    {
+      "id": "main-hq",
+      "code": "1",
+      "label": "A Company HQ",
+      "theme": "company",
+      "badge": "ab_inf_coy.svg",
+      "badgeWidth": "46",
+      "icon": "hq.png",
+      "labelFontSize": "9",
+      "select": {
+        "any": ["Coy_IC", "Coy_2IC", "CSM"],
+        "placeholder": "Vacant",
+        "sort": "rankPriority"
+      },
+      "layout": {
+        "type": "row",
+        "align": "center"
+      },
+      "alwaysShow": true,
+      "children": [
+        {
+          "id": "platoon-1-hq",
+          "code": "1.1",
+          "label": "1 Platoon HQ",
+          "theme": "platoon",
+          "badge": "ab_inf_pl.svg",
+          "icon": "red_hq.png",
+          "select": {
+            "any": ["1_Platoon_IC", "1_Platoon_2IC"],
+            "sort": "rankPriority"
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
+          "alwaysShow": true,
+          "children": [
+            {
+              "id": "1-1-section",
+              "code": "1.1.1",
+              "label": "1/1 Section",
+              "theme": "section",
+              "badge": "ab_inf_sec.svg",
+              "icon": "red_1.png",
+              "layout": {
+                "type": "column",
+                "gap": "xs",
+                "justify": "center"
+              },
+              "select": {
+                "any": ["1-1_Section"],
+                "all": ["Qualified_JNCOs"],
+                "sort": "rankPriority"
+              },
+              "alwaysShow": true
+            },
+            {
+              "id": "1-2-section",
+              "code": "1.1.2",
+              "label": "1/2 Section",
+              "theme": "section",
+              "badge": "ab_inf_sec.svg",
+              "icon": "red_2.png",
+              "layout": {
+                "type": "row",
+                "gap": "xs",
+                "wrap": false,
+                "align": "center"
+              },
+              "select": {
+                "any": ["1-2_Section"],
+                "placeholder": "Assigning..."
+              },
+              "alwaysShow": true
+            },
+            {
+              "id": "1-3-section",
+              "code": "1.1.3",
+              "label": "1/3 Section",
+              "theme": "section",
+              "badge": "ab_inf_sec.svg",
+              "icon": "red_3.png",
+              "select": {
+                "any": ["1-3_Section"],
+                "not": ["On_Leave"],
+                "limit": 8,
+                "includeHidden": true,
+                "sort": "joined",
+                "placeholder": "Awaiting approval"
+              },
+              "layout": {
+                "type": "column",
+                "columns": 2
+              },
+              "alwaysShow": true
+            }
+          ]
+        },
+        {
+          "id": "platoon-4-hq",
+          "code": "1.4",
+          "label": "4 Platoon HQ",
+          "theme": "platoon",
+          "badge": "ab_inf_css_pl.svg",
+          "icon": "black_hq.png",
+          "select": {
+            "any": ["4_Platoon_IC", "4_Platoon_2IC"],
+            "sort": "rankPriority"
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
+          "alwaysShow": true,
+          "children": [
+            {
+              "id": "fire-support-group",
+              "code": "1.4.1",
+              "label": "Fire Support Group",
+              "theme": "section",
+              "badge": "ab_inf_ms_sec.svg",
+              "icon": "black_1.png",
+              "select": {
+                "any": ["Fire_Support_Group"],
+                "sort": "rankPriority"
+              },
+              "layout": {
+                "type": "column"
+              },
+              "alwaysShow": true
+            },
+            {
+              "id": "force-protection",
+              "code": "1.4.2",
+              "label": "Force Protection",
+              "theme": "section",
+              "badge": "ab_inf_sec.svg",
+              "icon": "black_2.png",
+              "select": {
+                "any": ["Force_Protection"]
+              },
+              "layout": {
+                "type": "column"
+              },
+              "alwaysShow": true
+            },
+            {
+              "id": "logistics-cell",
+              "code": "1.4.6",
+              "label": "Logistics Cell",
+              "theme": "support",
+              "badge": "logi.svg",
+              "select": { "any": ["Logistics_Cell"] },
+              "layout": { "type": "row" },
+              "hideNode": true
+            }
+          ]
+        },
+        {
+          "id": "attachments",
+          "code": "1.5",
+          "label": "Attachments",
+          "theme": "platoon",
+          "badge": "atts_coy.svg",
+          "layout": { "type": "column", "gap": "sm" },
+          "select": {
+            "any": ["Attachments"],
+            "placeholder": "-"
+          },
+          "alwaysShow": true,
+          "children": [
+            {
+              "id": "joint-helicopter-command",
+              "code": "1.5.1",
+              "label": "Joint Helicopter Command",
+              "theme": "section",
+              "badge": "rot_wing_coy.svg",
+              "icon": "JHC.png",
+              "select": { "any": ["JHC"] },
+              "layout": { "type": "column" },
+              "alwaysShow": true
+            },
+            {
+              "id": "7-royal-horse-artillery",
+              "code": "1.5.2",
+              "label": "7 Royal Horse Artillery",
+              "theme": "section",
+              "icon": "7RHA.png",
+              "select": { "any": ["7RHA"] },
+              "layout": { "type": "column" },
+              "alwaysShow": true,
+              "children": [
+                {
+                  "id": "battery",
+                  "code": "1.5.2.1",
+                  "label": "Battery",
+                  "badge": "ab_art_batt.svg",
+                  "select": { "any": ["7RHA_Battery"] },
+                  "layout": { "type": "column" },
+                  "alwaysShow": true
+                },
+                {
+                  "id": "fst",
+                  "code": "1.5.2.2",
+                  "label": "Fire Support Team",
+                  "badge": "ab_fst.svg",
+                  "select": { "any": ["FST"] },
+                  "layout": { "type": "column" },
+                  "alwaysShow": true
+                }
+              ]
+            },
+            {
+              "id": "military-intelligence",
+              "code": "1.5.3",
+              "label": "Military Intelligence",
+              "theme": "section",
+              "badge": "mi_ft.svg",
+              "icon": "MI.png",
+              "select": { "any": ["MI"], "sort": "rankPriority" },
+              "layout": { "type": "column" },
+              "alwaysShow": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "support-hq",
+      "code": "2",
+      "label": "Support HQ",
+      "theme": "company",
+      "badge": "adm_pl.svg",
+      "labelFontSize": "9",
+      "layout": { "type": "column" },
+      "select": {
+        "any": ["Support_Command"],
+        "placeholder": "-"
+      },
+      "alwaysShow": true,
+      "children": [
+        {
+          "id": "reme",
+          "code": "2.1",
+          "label": "REME",
+          "theme": "section",
+          "badge": "reme_sec.svg",
+          "icon": "REME.png",
+          "select": { "any": ["REME"] },
+          "layout": { "type": "column" },
+          "alwaysShow": true
+        },
+        {
+          "id": "rro",
+          "code": "2.2",
+          "label": "RRO",
+          "theme": "section",
+          "badge": "rro_sec.svg",
+          "select": { "any": ["RRO"] },
+          "layout": { "type": "column" },
+          "alwaysShow": true,
+          "children": [
+            {
+              "id": "media",
+              "code": "2.2.1",
+              "label": "Media",
+              "theme": "section",
+              "badge": "media_sec.svg",
+              "select": { "any": ["Media"], "sort": "joined" },
+              "layout": { "type": "column" },
+              "alwaysShow": true
+            }
+          ]
+        },
+        {
+          "id": "rlc",
+          "code": "2.3",
+          "label": "RLC",
+          "theme": "section",
+          "badge": "rlc_sec.svg",
+          "icon": "RLC.png",
+          "select": { "any": ["RLC"] },
+          "layout": { "type": "column" },
+          "alwaysShow": true
+        },
+        {
+          "id": "3lsr",
+          "code": "2.4",
+          "label": "3LSR",
+          "theme": "section",
+          "badge": "3lsr_sec.svg",
+          "icon": "RLC.png",
+          "select": { "any": ["3LSR"] },
+          "layout": { "type": "column" },
+          "alwaysShow": true
+        },
+        {
+          "id": "itc",
+          "code": "2.5",
+          "label": "ITC",
+          "theme": "section",
+          "badge": "itc_sec.svg",
+          "icon": "ITC.png",
+          "select": { "any": ["ITC"] },
+          "layout": { "type": "column" },
+          "alwaysShow": true
+        }
+      ]
+    }
+  ]
+}</code></pre>
+
+                  <p>
+                    Use the preview action after edits to validate JSON syntax
+                    and ensure every referenced group exists or is visible to the
+                    resolver.
+                  </p>
+                </div>
+              </details>
+
               <form.Field
                 @name="configuration"
                 @title={{i18n "orbat_admin.editor.heading"}}
                 @description={{i18n "orbat_admin.editor.help"}}
+                @format="full"
                 as |field|
               >
                 <field.Code @lang="javascript" @height={{420}} />

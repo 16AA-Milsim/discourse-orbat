@@ -1,6 +1,10 @@
 {{! template-lint-disable require-strict-mode}}
 <li
-  class={{concat "orbat-branch__item " (if this.hasChildren "orbat-branch__item--has-children" "")}}
+  class={{concat
+    "orbat-branch__item"
+    (if this.hasChildren " orbat-branch__item--has-children" "")
+    (if this.hasSingleChild " orbat-branch__item--single-child" "")
+  }}
   {{did-insert this.setupElement}}
   {{did-update this.updateElement this.children.length}}
 >
@@ -11,7 +15,11 @@
   {{#if this.hasChildren}}
     <ul class={{concat "orbat-branch__children " (if this.hasMultipleChildren "orbat-branch__children--multi" "")}}>
       {{#each this.children key="id" as |child|}}
-        <OrbatBranch @node={{child}} @display={{this.display}} />
+        <OrbatBranch
+          @node={{child}}
+          @display={{this.display}}
+          @notifyReady={{@notifyReady}}
+        />
       {{/each}}
     </ul>
   {{/if}}
