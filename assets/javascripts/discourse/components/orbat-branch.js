@@ -66,12 +66,29 @@ export default class OrbatBranch extends Component {
       return;
     }
 
+    const prevSibling = element.previousElementSibling;
+    const nextSibling = element.nextElementSibling;
+    const styles = getComputedStyle(element);
+    const horizontalGap = this.#getHorizontalGap(
+      element.parentElement,
+      styles
+    );
+    const leftGap =
+      prevSibling && this.#isSameRow(prevSibling, element)
+        ? horizontalGap / 2
+        : 0;
+    const rightGap =
+      nextSibling && this.#isSameRow(nextSibling, element)
+        ? horizontalGap / 2
+        : 0;
+
     const width = element.offsetWidth;
     if (!width) {
+      element.style.setProperty("--orbat-connector-left-gap", `${leftGap}px`);
+      element.style.setProperty("--orbat-connector-right-gap", `${rightGap}px`);
       return;
     }
 
-    const styles = getComputedStyle(element);
     const connectorWidthValue = parseFloat(
       styles.getPropertyValue("--orbat-connector-width")
     );
@@ -93,6 +110,55 @@ export default class OrbatBranch extends Component {
       "--orbat-connector-vertical-left",
       `${verticalLeft}px`
     );
+    element.style.setProperty("--orbat-connector-left-gap", `${leftGap}px`);
+    element.style.setProperty("--orbat-connector-right-gap", `${rightGap}px`);
+  }
+
+  #getHorizontalGap(parentElement, elementStyles) {
+    if (!parentElement) {
+      return 0;
+    }
+
+    const parentStyles = getComputedStyle(parentElement);
+    const candidates = [
+      parentStyles.columnGap,
+      parentStyles.gap,
+      parentStyles.gridColumnGap,
+    ];
+
+    for (const candidate of candidates) {
+      const parsed = this.#parsePixelValue(candidate);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    }
+
+    const fallback = this.#parsePixelValue(
+      elementStyles?.getPropertyValue("--orbat-node-gap")
+    );
+
+    return Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
+  }
+
+  #parsePixelValue(value) {
+    if (value === null || value === undefined) {
+      return NaN;
+    }
+
+    if (typeof value === "number") {
+      return value;
+    }
+
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
+  #isSameRow(sibling, element) {
+    if (!sibling || !element) {
+      return false;
+    }
+
+    return Math.abs(sibling.offsetTop - element.offsetTop) < 1;
   }
 
   #teardown() {
