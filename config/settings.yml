@@ -61,37 +61,6 @@ plugins:
           "Gunner",
           "Recruit"
         ],
-        "groupPriority": [
-          "Coy_IC",
-          "Coy_2IC",
-          "CSM",
-          "1_Platoon_IC",
-          "1_Platoon_2IC",
-          "2_Platoon_IC",
-          "2_Platoon_2IC",
-          "1-1_Section_IC",
-          "1-1_Section_2IC",
-          "1-1_Section",
-          "1-2_Section_IC",
-          "1-2_Section_2IC",
-          "1-2_Section",
-          "1-3_Section_IC",
-          "1-3_Section_2IC",
-          "1-3_Section",
-          "Fire_Support_Group_IC",
-          "Fire_Support_Group_2IC",
-          "Fire_Support_Group",
-          "Force_Protection_IC",
-          "Force_Protection_2IC",
-          "Force_Protection",
-          "13AASR_IC",
-          "13AASR_2IC",
-          "13AASR",
-          "16CSMR_IC",
-          "16CSMR_2IC",
-          "16CSMR",
-          "Reserves"
-        ],
         "nodes": [
           {
             "id": "coy-hq",
@@ -103,8 +72,7 @@ plugins:
             "icon": "hq.png",
             "labelFontSize": "9",
             "select": {
-              "any": ["Coy_IC", "Coy_2IC", "CSM"],
-              "sort": "rankPriority"
+              "any": ["Coy_IC", "Coy_2IC", "CSM"]
             },
             "layout": {
               "type": "row",
@@ -120,8 +88,7 @@ plugins:
                 "badge": "ab_inf_pl.svg",
                 "icon": "red_hq.png",
                 "select": {
-                  "any": ["1_Platoon_IC", "1_Platoon_2IC"],
-                  "sort": "rankPriority"
+                  "any": ["1_Platoon_IC", "1_Platoon_2IC"]
                 },
                 "layout": {
                   "type": "column",
@@ -137,8 +104,7 @@ plugins:
                     "badge": "ab_inf_sec.svg",
                     "icon": "red_1.png",
                     "select": {
-                      "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"],
-                      "sort": "rankPriority"
+                      "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"]
                     },
                     "layout": {
                       "type": "column",
@@ -154,8 +120,7 @@ plugins:
                     "badge": "ab_inf_sec.svg",
                     "icon": "red_2.png",
                     "select": {
-                      "any": ["1-2_Section_IC", "1-2_Section_2IC", "1-2_Section"],
-                      "sort": "rankPriority"
+                      "any": ["1-2_Section_IC", "1-2_Section_2IC", "1-2_Section"]
                     },
                     "layout": {
                       "type": "column",
@@ -171,8 +136,7 @@ plugins:
                     "badge": "ab_inf_sec.svg",
                     "icon": "red_3.png",
                     "select": {
-                      "any": ["1-3_Section_IC", "1-3_Section_2IC", "1-3_Section"],
-                      "sort": "rankPriority"
+                      "any": ["1-3_Section_IC", "1-3_Section_2IC", "1-3_Section"]
                     },
                     "layout": {
                       "type": "column",
@@ -190,8 +154,7 @@ plugins:
                 "badge": "ab_inf_css_pl.svg",
                 "icon": "black_hq.png",
                 "select": {
-                  "any": ["4_Platoon_IC", "4_Platoon_2IC"],
-                  "sort": "rankPriority"
+                  "any": ["4_Platoon_IC", "4_Platoon_2IC"]
                 },
                 "layout": {
                   "type": "column",
@@ -207,8 +170,7 @@ plugins:
                     "badge": "ab_inf_ms_sec.svg",
                     "icon": "black_1.png",
                     "select": {
-                      "any": ["Fire_Support_Group_IC", "Fire_Support_Group_2IC", "Fire_Support_Group"],
-                      "sort": "rankPriority"
+                      "any": ["Fire_Support_Group_IC", "Fire_Support_Group_2IC", "Fire_Support_Group"]
                     },
                     "layout": {
                       "type": "column",
@@ -224,8 +186,7 @@ plugins:
                     "badge": "ab_inf_sec.svg",
                     "icon": "black_2.png",
                     "select": {
-                      "any": ["Force_Protection_IC", "Force_Protection_2IC", "Force_Protection"],
-                      "sort": "rankPriority"
+                      "any": ["Force_Protection_IC", "Force_Protection_2IC", "Force_Protection"]
                     },
                     "layout": {
                       "type": "column",
@@ -241,8 +202,7 @@ plugins:
                     "badge": "ab_inf_logi_eod_sec.svg",
                     "icon": "black_3.png",
                     "select": {
-                      "any": ["13AASR_IC", "13AASR_2IC", "13AASR"],
-                      "sort": "rankPriority"
+                      "any": ["13AASR_IC", "13AASR_2IC", "13AASR"]
                     },
                     "layout": {
                       "type": "column",
@@ -258,8 +218,7 @@ plugins:
                     "badge": "ab_inf_mdcl_sec.svg",
                     "icon": "black_4.png",
                     "select": {
-                      "any": ["16CSMR_IC", "16CSMR_2IC", "16CSMR"],
-                      "sort": "rankPriority"
+                      "any": ["16CSMR_IC", "16CSMR_2IC", "16CSMR"]
                     },
                     "layout": {
                       "type": "column",
@@ -275,8 +234,7 @@ plugins:
                     "badge": "ab_inf_sup_sec.svg",
                     "icon": "",
                     "select": {
-                      "any": ["Reserves"],
-                      "sort": "rankPriority"
+                      "any": ["Reserves"]
                     },
                     "layout": {
                       "type": "column",
@@ -294,8 +252,7 @@ plugins:
                 "badge": "atts_coy.svg",
                 "icon": "",
                 "select": {
-                  "any": ["Attachments_IC", "Attachments_2IC"],
-                  "sort": "rankPriority"
+                  "any": ["Attachments_IC", "Attachments_2IC"]
                 },
                 "layout": {
                   "type": "column",
@@ -311,8 +268,7 @@ plugins:
                     "badge": "rot_wing_coy.svg",
                     "icon": "JHC.png",
                     "select": {
-                      "any": ["JHC_IC", "JHC_2IC", "JHC"],
-                      "sort": "rankPriority"
+                      "any": ["JHC_IC", "JHC_2IC", "JHC"]
                     },
                     "layout": {
                       "type": "column",
@@ -328,8 +284,7 @@ plugins:
                     "icon": "7RHA.png",
                     "hideNode": true,
                     "select": {
-                      "any": [""],
-                      "sort": "rankPriority"
+                      "any": [""]
                     },
                     "layout": {
                       "type": "column",
@@ -345,8 +300,7 @@ plugins:
                         "badge": "ab_art_batt.svg",
                         "icon": "",
                         "select": {
-                          "any": ["7RHA_IC", "7RHA_2IC", "7RHA"],
-                          "sort": "rankPriority"
+                          "any": ["7RHA_IC", "7RHA_2IC", "7RHA"]
                         },
                         "layout": {
                           "type": "column",
@@ -362,8 +316,7 @@ plugins:
                         "badge": "ab_fst.svg",
                         "icon": "",
                         "select": {
-                          "any": ["FST_IC", "FST_2IC", "FST"],
-                          "sort": "rankPriority"
+                          "any": ["FST_IC", "FST_2IC", "FST"]
                         },
                         "layout": {
                           "type": "column",
@@ -381,8 +334,7 @@ plugins:
                     "badge": "mi_ft.svg",
                     "icon": "MI.png",
                     "select": {
-                      "any": ["MI_IC", "MI_2IC", "MI"],
-                      "sort": "rankPriority"
+                      "any": ["MI_IC", "MI_2IC", "MI"]
                     },
                     "layout": {
                       "type": "column",
@@ -415,8 +367,7 @@ plugins:
                 "1_Platoon_IC",
                 "4_Platoon_IC",
                 "Attachments_IC"
-              ],
-              "sort": "rankPriority"
+              ]
             },
             "layout": {
               "type": "column",
@@ -432,8 +383,7 @@ plugins:
                 "badge": "reme_sec.svg",
                 "icon": "REME.png",
                 "select": {
-                  "any": ["REME_IC", "REME_2IC", "REME"],
-                  "sort": "rankPriority"
+                  "any": ["REME_IC", "REME_2IC", "REME"]
                 },
                 "layout": {
                   "type": "column",
@@ -448,8 +398,7 @@ plugins:
                 "theme": "section",
                 "badge": "rro_sec.svg",
                 "select": {
-                  "any": ["RRO_IC", "RRO_2IC", "RRO"],
-                  "sort": "rankPriority"
+                  "any": ["RRO_IC", "RRO_2IC", "RRO"]
                 },
                 "layout": {
                   "type": "column",
@@ -464,8 +413,7 @@ plugins:
                     "theme": "section",
                     "badge": "media_sec.svg",
                     "select": {
-                      "any": ["Media_IC", "Media_2IC", "Media"],
-                      "sort": "rankPriority"
+                      "any": ["Media_IC", "Media_2IC", "Media"]
                     },
                     "layout": {
                       "type": "column",
@@ -483,8 +431,7 @@ plugins:
                 "badge": "rlc_sec.svg",
                 "icon": "RLC.png",
                 "select": {
-                  "any": ["RLC_IC", "RLC_2IC", "RLC"],
-                  "sort": "rankPriority"
+                  "any": ["RLC_IC", "RLC_2IC", "RLC"]
                 },
                 "layout": {
                   "type": "column",
@@ -500,8 +447,7 @@ plugins:
                 "badge": "3lsr_sec.svg",
                 "icon": "RLC.png",
                 "select": {
-                  "any": ["3LSR_IC", "3LSR_2IC", "3LSR"],
-                  "sort": "rankPriority"
+                  "any": ["3LSR_IC", "3LSR_2IC", "3LSR"]
                 },
                 "layout": {
                   "type": "column",
@@ -517,8 +463,7 @@ plugins:
                 "badge": "itc_sec.svg",
                 "icon": "ITC.png",
                 "select": {
-                  "any": ["ITC_IC", "ITC_2IC", "ITC"],
-                  "sort": "rankPriority"
+                  "any": ["ITC_IC", "ITC_2IC", "ITC"]
                 },
                 "layout": {
                   "type": "column",

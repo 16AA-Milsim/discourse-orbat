@@ -7,6 +7,7 @@ en:
         errors_title: "Configuration warnings"
         no_data: "The ORBAT configuration does not yet contain any visible units."
         back: "Go back"
+        member_count: "Total Members: %{count}"
       node:
         placeholder: "-"
         empty: "-"
@@ -36,6 +37,11 @@ en:
       settings:
         enabled: "Enable the ORBAT plugin"
         admin_only: "Restrict ORBAT visibility to admins"
+      user_join_date:
+        label: "16AA Join Date"
+        help: "Leave blank/remove if the user is not a member."
+        save: "Save Date"
+        remove: "Remove Date"
     static:
       orbat:
         title: "ORBAT"

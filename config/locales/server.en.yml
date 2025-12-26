@@ -8,6 +8,7 @@ en:
   orbat_admin:
     errors:
       missing_default: "Default ORBAT configuration is unavailable."
+      invalid_join_date: "Join date must be a valid date (YYYY-MM-DD)."
   site_settings:
     orbat_enabled: "Enable the ORBAT plugin"
     orbat_admin_only: "Restrict the ORBAT page to admins"

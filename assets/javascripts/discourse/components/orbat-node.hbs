@@ -84,15 +84,4 @@
     </div>
   {{/unless}}
 
-  {{#if this.hasChildren}}
-    <div class="orbat-node__branches" data-children={{this.childCount}}>
-      <div class={{this.childrenClass}} style={{this.childrenStyle}}>
-        {{#each this.children as |child|}}
-          <div class="orbat-node__branch">
-            <OrbatNode @node={{child}} @display={{@display}} />
-          </div>
-        {{/each}}
-      </div>
-    </div>
-  {{/if}}
 </div>

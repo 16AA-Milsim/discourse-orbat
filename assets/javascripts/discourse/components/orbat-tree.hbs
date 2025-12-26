@@ -117,7 +117,14 @@
             {{i18n "orbat.page.no_data"}}
           </div>
         {{/if}}
-      </nav>
+        </nav>
+        {{#if this.showMemberCount}}
+          <div class="orbat-page__member-count">
+            <span class="orbat-page__member-count-text">
+              {{i18n "orbat.page.member_count" count=this.uniqueMemberCount}}
+            </span>
+          </div>
+        {{/if}}
       </div>
     </div>
   </div>

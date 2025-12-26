@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require "set" # rubocop:disable Lint/RedundantRequireStatement
+require "date" # rubocop:disable Lint/RedundantRequireStatement
 
 class ::Orbat::Service
   CACHE_KEY = "orbat:tree"
+  JOIN_DATE_FIELD = "orbat_join_date"
 
   DEFAULT_CONFIGURATION = <<~JSON.freeze
     {
@@ -58,37 +60,6 @@ class ::Orbat::Service
         "Gunner",
         "Recruit"
       ],
-      "groupPriority": [
-        "Coy_IC",
-        "Coy_2IC",
-        "CSM",
-        "1_Platoon_IC",
-        "1_Platoon_2IC",
-        "2_Platoon_IC",
-        "2_Platoon_2IC",
-        "1-1_Section_IC",
-        "1-1_Section_2IC",
-        "1-1_Section",
-        "1-2_Section_IC",
-        "1-2_Section_2IC",
-        "1-2_Section",
-        "1-3_Section_IC",
-        "1-3_Section_2IC",
-        "1-3_Section",
-        "Fire_Support_Group_IC",
-        "Fire_Support_Group_2IC",
-        "Fire_Support_Group",
-        "Force_Protection_IC",
-        "Force_Protection_2IC",
-        "Force_Protection",
-        "13AASR_IC",
-        "13AASR_2IC",
-        "13AASR",
-        "16CSMR_IC",
-        "16CSMR_2IC",
-        "16CSMR",
-        "Reserves"
-      ],
       "nodes": [
         {
           "id": "coy-hq",
@@ -100,8 +71,7 @@ class ::Orbat::Service
           "icon": "hq.png",
           "labelFontSize": "9",
           "select": {
-            "any": ["Coy_IC", "Coy_2IC", "CSM"],
-            "sort": "rankPriority"
+            "any": ["Coy_IC", "Coy_2IC", "CSM"]
           },
           "layout": {
             "type": "row",
@@ -117,8 +87,7 @@ class ::Orbat::Service
               "badge": "ab_inf_pl.svg",
               "icon": "red_hq.png",
               "select": {
-                "any": ["1_Platoon_IC", "1_Platoon_2IC"],
-                "sort": "rankPriority"
+                "any": ["1_Platoon_IC", "1_Platoon_2IC"]
               },
               "layout": {
                 "type": "column",
@@ -134,8 +103,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_sec.svg",
                   "icon": "red_1.png",
                   "select": {
-                    "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"],
-                    "sort": "rankPriority"
+                    "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"]
                   },
                   "layout": {
                     "type": "column",
@@ -151,8 +119,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_sec.svg",
                   "icon": "red_2.png",
                   "select": {
-                    "any": ["1-2_Section_IC", "1-2_Section_2IC", "1-2_Section"],
-                    "sort": "rankPriority"
+                    "any": ["1-2_Section_IC", "1-2_Section_2IC", "1-2_Section"]
                   },
                   "layout": {
                     "type": "column",
@@ -168,8 +135,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_sec.svg",
                   "icon": "red_3.png",
                   "select": {
-                    "any": ["1-3_Section_IC", "1-3_Section_2IC", "1-3_Section"],
-                    "sort": "rankPriority"
+                    "any": ["1-3_Section_IC", "1-3_Section_2IC", "1-3_Section"]
                   },
                   "layout": {
                     "type": "column",
@@ -187,8 +153,7 @@ class ::Orbat::Service
               "badge": "ab_inf_css_pl.svg",
               "icon": "black_hq.png",
               "select": {
-                "any": ["4_Platoon_IC", "4_Platoon_2IC"],
-                "sort": "rankPriority"
+                "any": ["4_Platoon_IC", "4_Platoon_2IC"]
               },
               "layout": {
                 "type": "column",
@@ -204,8 +169,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_ms_sec.svg",
                   "icon": "black_1.png",
                   "select": {
-                    "any": ["Fire_Support_Group_IC", "Fire_Support_Group_2IC", "Fire_Support_Group"],
-                    "sort": "rankPriority"
+                    "any": ["Fire_Support_Group_IC", "Fire_Support_Group_2IC", "Fire_Support_Group"]
                   },
                   "layout": {
                     "type": "column",
@@ -221,8 +185,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_sec.svg",
                   "icon": "black_2.png",
                   "select": {
-                    "any": ["Force_Protection_IC", "Force_Protection_2IC", "Force_Protection"],
-                    "sort": "rankPriority"
+                    "any": ["Force_Protection_IC", "Force_Protection_2IC", "Force_Protection"]
                   },
                   "layout": {
                     "type": "column",
@@ -238,8 +201,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_logi_eod_sec.svg",
                   "icon": "black_3.png",
                   "select": {
-                    "any": ["13AASR_IC", "13AASR_2IC", "13AASR"],
-                    "sort": "rankPriority"
+                    "any": ["13AASR_IC", "13AASR_2IC", "13AASR"]
                   },
                   "layout": {
                     "type": "column",
@@ -255,8 +217,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_mdcl_sec.svg",
                   "icon": "black_4.png",
                   "select": {
-                    "any": ["16CSMR_IC", "16CSMR_2IC", "16CSMR"],
-                    "sort": "rankPriority"
+                    "any": ["16CSMR_IC", "16CSMR_2IC", "16CSMR"]
                   },
                   "layout": {
                     "type": "column",
@@ -272,8 +233,7 @@ class ::Orbat::Service
                   "badge": "ab_inf_sup_sec.svg",
                   "icon": "",
                   "select": {
-                    "any": ["Reserves"],
-                    "sort": "rankPriority"
+                    "any": ["Reserves"]
                   },
                   "layout": {
                     "type": "column",
@@ -291,8 +251,7 @@ class ::Orbat::Service
               "badge": "atts_coy.svg",
               "icon": "",
               "select": {
-                "any": ["Attachments_IC", "Attachments_2IC"],
-                "sort": "rankPriority"
+                "any": ["Attachments_IC", "Attachments_2IC"]
               },
               "layout": {
                 "type": "column",
@@ -308,8 +267,7 @@ class ::Orbat::Service
                   "badge": "rot_wing_coy.svg",
                   "icon": "JHC.png",
                   "select": {
-                    "any": ["JHC_IC", "JHC_2IC", "JHC"],
-                    "sort": "rankPriority"
+                    "any": ["JHC_IC", "JHC_2IC", "JHC"]
                   },
                   "layout": {
                     "type": "column",
@@ -325,8 +283,7 @@ class ::Orbat::Service
                   "icon": "7RHA.png",
                   "hideNode": true,
                   "select": {
-                    "any": [""],
-                    "sort": "rankPriority"
+                    "any": [""]
                   },
                   "layout": {
                     "type": "column",
@@ -342,8 +299,7 @@ class ::Orbat::Service
                       "badge": "ab_art_batt.svg",
                       "icon": "",
                       "select": {
-                        "any": ["7RHA_IC", "7RHA_2IC", "7RHA"],
-                        "sort": "rankPriority"
+                        "any": ["7RHA_IC", "7RHA_2IC", "7RHA"]
                       },
                       "layout": {
                         "type": "column",
@@ -359,8 +315,7 @@ class ::Orbat::Service
                       "badge": "ab_fst.svg",
                       "icon": "",
                       "select": {
-                        "any": ["FST_IC", "FST_2IC", "FST"],
-                        "sort": "rankPriority"
+                        "any": ["FST_IC", "FST_2IC", "FST"]
                       },
                       "layout": {
                         "type": "column",
@@ -378,8 +333,7 @@ class ::Orbat::Service
                   "badge": "mi_ft.svg",
                   "icon": "MI.png",
                   "select": {
-                    "any": ["MI_IC", "MI_2IC", "MI"],
-                    "sort": "rankPriority"
+                    "any": ["MI_IC", "MI_2IC", "MI"]
                   },
                   "layout": {
                     "type": "column",
@@ -412,8 +366,7 @@ class ::Orbat::Service
               "1_Platoon_IC",
               "4_Platoon_IC",
               "Attachments_IC"
-            ],
-            "sort": "rankPriority"
+            ]
           },
           "layout": {
             "type": "column",
@@ -429,8 +382,7 @@ class ::Orbat::Service
               "badge": "reme_sec.svg",
               "icon": "REME.png",
               "select": {
-                "any": ["REME_IC", "REME_2IC", "REME"],
-                "sort": "rankPriority"
+                "any": ["REME_IC", "REME_2IC", "REME"]
               },
               "layout": {
                 "type": "column",
@@ -445,8 +397,7 @@ class ::Orbat::Service
               "theme": "section",
               "badge": "rro_sec.svg",
               "select": {
-                "any": ["RRO_IC", "RRO_2IC", "RRO"],
-                "sort": "rankPriority"
+                "any": ["RRO_IC", "RRO_2IC", "RRO"]
               },
               "layout": {
                 "type": "column",
@@ -461,8 +412,7 @@ class ::Orbat::Service
                   "theme": "section",
                   "badge": "media_sec.svg",
                   "select": {
-                    "any": ["Media_IC", "Media_2IC", "Media"],
-                    "sort": "rankPriority"
+                    "any": ["Media_IC", "Media_2IC", "Media"]
                   },
                   "layout": {
                     "type": "column",
@@ -480,8 +430,7 @@ class ::Orbat::Service
               "badge": "rlc_sec.svg",
               "icon": "RLC.png",
               "select": {
-                "any": ["RLC_IC", "RLC_2IC", "RLC"],
-                "sort": "rankPriority"
+                "any": ["RLC_IC", "RLC_2IC", "RLC"]
               },
               "layout": {
                 "type": "column",
@@ -497,8 +446,7 @@ class ::Orbat::Service
               "badge": "3lsr_sec.svg",
               "icon": "RLC.png",
               "select": {
-                "any": ["3LSR_IC", "3LSR_2IC", "3LSR"],
-                "sort": "rankPriority"
+                "any": ["3LSR_IC", "3LSR_2IC", "3LSR"]
               },
               "layout": {
                 "type": "column",
@@ -514,8 +462,7 @@ class ::Orbat::Service
               "badge": "itc_sec.svg",
               "icon": "ITC.png",
               "select": {
-                "any": ["ITC_IC", "ITC_2IC", "ITC"],
-                "sort": "rankPriority"
+                "any": ["ITC_IC", "ITC_2IC", "ITC"]
               },
               "layout": {
                 "type": "column",
@@ -562,7 +509,7 @@ class ::Orbat::Service
   SETTING_DEFAULTS = {
     orbat_cache_ttl: 60,
     orbat_json: DEFAULT_CONFIGURATION,
-    orbat_hide_hidden_groups: true,
+    orbat_hide_hidden_groups: true
   }.freeze
 
   DEFAULT_DISPLAY = {
@@ -573,7 +520,7 @@ class ::Orbat::Service
     "rootColumns" => nil,
     "gap" => "lg",
     "showAvatars" => false,
-    "emptyLabel" => "-",
+    "emptyLabel" => "-"
   }.freeze
 
   class << self
@@ -604,7 +551,7 @@ class ::Orbat::Service
         "display" => context[:display],
         "nodes" => nodes,
         "generatedAt" => Time.zone.now.to_i,
-        "errors" => context[:errors].uniq,
+        "errors" => context[:errors].uniq
       }
     rescue JSON::ParserError => e
       error_payload(I18n.t("orbat.errors.invalid_json", message: e.message))
@@ -627,7 +574,7 @@ class ::Orbat::Service
         "display" => DEFAULT_DISPLAY.merge("emptyLabel" => default_empty_label),
         "nodes" => [],
         "generatedAt" => Time.zone.now.to_i,
-        "errors" => Array(message),
+        "errors" => Array(message)
       }
     end
 
@@ -637,17 +584,8 @@ class ::Orbat::Service
     end
 
     def build_context(config)
-      legacy_rank_priority = false
-
-      if config.key?("groupPriority")
-        group_priority = Array(config["groupPriority"]).map(&:to_s)
-      else
-        group_priority = Array(config["rankPriority"]).map(&:to_s)
-        legacy_rank_priority = true
-      end
-
       rank_priority_groups =
-        if !legacy_rank_priority && config.key?("rankPriority")
+        if config.key?("rankPriority")
           Array(config["rankPriority"]).map(&:to_s)
         else
           Array(config["rankGroups"]).map(&:to_s)
@@ -656,7 +594,6 @@ class ::Orbat::Service
       rank_priority_groups = DEFAULT_RANK_PRIORITY if rank_priority_groups.blank?
 
       group_names = collect_group_names(config.fetch("nodes", []))
-      group_names.concat(group_priority)
       group_names.concat(rank_priority_groups)
       group_names = group_names.compact.uniq
 
@@ -692,30 +629,41 @@ class ::Orbat::Service
         groups: groups,
         members: members,
         user_groups: user_groups,
-        group_priority: group_priority,
         rank_priority: rank_priority_groups,
-        rank_index: build_rank_index(rank_priority_groups, group_priority),
+        rank_only_index: build_rank_only_index(rank_priority_groups),
+        join_dates: build_join_date_index(member_records),
         display: display,
         hide_hidden_groups: setting(:orbat_hide_hidden_groups) ? true : false,
         errors: [],
-        missing_groups: Set.new,
+        missing_groups: Set.new
       }
     end
 
-    def build_rank_index(rank_priority_groups, group_priority)
+    def build_rank_only_index(rank_priority_groups)
       index_map = {}
 
       rank_priority_groups.each_with_index do |name, index|
         index_map[name] = index
       end
 
-      offset = rank_priority_groups.length
-
-      group_priority.each_with_index do |name, index|
-        index_map[name] ||= offset + index
-      end
-
       index_map
+    end
+
+    def build_join_date_index(member_records)
+      users = member_records.map(&:user).compact.uniq
+      return {} if users.empty?
+
+      ids = users.map(&:id)
+      raw_dates =
+        UserCustomField
+          .where(user_id: ids, name: JOIN_DATE_FIELD)
+          .pluck(:user_id, :value)
+          .to_h
+
+      users.each_with_object({}) do |user, index|
+        join_date = parse_join_date(raw_dates[user.id]) || user.created_at.to_date
+        index[user.id] = join_date
+      end
     end
 
     def collect_group_names(nodes)
@@ -774,8 +722,8 @@ class ::Orbat::Service
         "meta" => {
           "sourceGroups" => meta_groups,
           "alwaysShow" => !!definition["alwaysShow"],
-          "hideNode" => !!definition["hideNode"],
-        },
+          "hideNode" => !!definition["hideNode"]
+        }
       }
     end
 
@@ -783,7 +731,7 @@ class ::Orbat::Service
       {
         "any" => Array(select["any"]),
         "all" => Array(select["all"]),
-        "not" => Array(select["not"]),
+        "not" => Array(select["not"])
       }
     end
 
@@ -798,7 +746,7 @@ class ::Orbat::Service
         "gap" => layout["gap"] || layout["spacing"],
         "align" => layout["align"],
         "justify" => layout["justify"],
-        "wrap" => layout.key?("wrap") ? layout["wrap"] : type == "row",
+        "wrap" => layout.key?("wrap") ? layout["wrap"] : type == "row"
       }.compact
     end
 
@@ -880,17 +828,17 @@ class ::Orbat::Service
     end
 
     def sort_and_limit(users, select, context)
-      sort = select && select["sort"] || "alpha"
       limit = select && select["limit"]
+      select_index = build_select_index(select)
 
       sorted =
-        case sort
-        when "joined"
-          users.sort_by(&:created_at)
-        when "rankPriority"
-          users.sort_by { |user| [best_rank_index(user, context), user.username_lower] }
-        else
-          users.sort_by { |user| [best_rank_index(user, context), user.username_lower] }
+        users.sort_by do |user|
+          [
+            best_group_index(user, context, select_index),
+            best_rank_only_index(user, context),
+            best_join_date(user, context),
+            user.username_lower
+          ]
         end
 
       sorted = sorted.first(limit) if limit.present?
@@ -898,11 +846,57 @@ class ::Orbat::Service
       sorted.map { |user| serialize_user(user, context) }
     end
 
-    def best_rank_index(user, context)
+    def best_rank_only_index(user, context)
       Array(context[:user_groups][user.id])
-        .map { |name| context[:rank_index][name] }
+        .map { |name| context[:rank_only_index][name] }
         .compact
         .min || Float::INFINITY
+    end
+
+    def best_group_index(user, context, select_index)
+      return Float::INFINITY if select_index.empty?
+
+      candidates =
+        Array(context[:user_groups][user.id]).select do |name|
+          select_index.key?(name)
+        end
+
+      return Float::INFINITY if candidates.empty?
+
+      candidates
+        .map { |name| select_index[name] }
+        .min || Float::INFINITY
+    end
+
+    def best_join_date(user, context)
+      context[:join_dates][user.id] || user.created_at.to_date
+    end
+
+    def build_select_index(select)
+      return {} unless select.is_a?(Hash)
+
+      groups =
+        if select["all"].present?
+          Array(select["all"])
+        else
+          Array(select["any"])
+        end
+      groups = groups.map { |name| name.to_s.strip }.reject(&:blank?)
+
+      index = {}
+      groups.each_with_index do |name, idx|
+        index[name] ||= idx
+      end
+
+      index
+    end
+
+    def parse_join_date(value)
+      return nil if value.blank?
+
+      Date.iso8601(value.to_s)
+    rescue ArgumentError
+      nil
     end
 
     def serialize_user(user, context)
@@ -925,7 +919,7 @@ class ::Orbat::Service
         "summaryPath" => summary_path,
         "profilePath" => profile_path,
         "rankPrefix" => rank_prefix,
-        "groups" => context[:user_groups][user.id] || [],
+        "groups" => context[:user_groups][user.id] || []
       }
     end
 
@@ -937,7 +931,7 @@ class ::Orbat::Service
         "title" => banner["title"],
         "subtitle" => banner["subtitle"],
         "background" => banner["background"],
-        "accent" => banner["accent"],
+        "accent" => banner["accent"]
       }.compact
     end
 

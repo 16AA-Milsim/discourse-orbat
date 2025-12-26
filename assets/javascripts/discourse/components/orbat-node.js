@@ -14,6 +14,7 @@ import { htmlSafe } from "@ember/template";
  */
 export default class OrbatNode extends Component {
   @tracked labelMeasuredWidth = null;
+  @tracked forceSingleLineLabel = false;
 
   _labelTextElement = null;
   _measureFrame = null;
@@ -96,7 +97,7 @@ export default class OrbatNode extends Component {
   }
 
   get maxLabelWidth() {
-    return this.hasIcon ? 72 : 96;
+    return this.hasIcon ? 80 : 96;
   }
 
   get badgeWidth() {
@@ -143,8 +144,8 @@ export default class OrbatNode extends Component {
       declarations.push(`width: ${this.labelMeasuredWidth}px`);
     }
 
-    if (this._singleLineLabelAdjustment) {
-      declarations.push("transform: translateY(1px)");
+    if (this.forceSingleLineLabel) {
+      declarations.push("white-space: nowrap");
     }
 
     if (!declarations.length) {
@@ -285,6 +286,7 @@ export default class OrbatNode extends Component {
       this._labelTextElement = null;
     }
     this.labelMeasuredWidth = null;
+    this.forceSingleLineLabel = false;
     this._singleLineLabelAdjustment = false;
     if (this._measureFrame && typeof window !== "undefined") {
       window.cancelAnimationFrame?.(this._measureFrame);
@@ -322,6 +324,9 @@ export default class OrbatNode extends Component {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
+      if (this.forceSingleLineLabel) {
+        this.forceSingleLineLabel = false;
+      }
       this._singleLineLabelAdjustment = false;
       return;
     }
@@ -334,7 +339,24 @@ export default class OrbatNode extends Component {
       if (this.labelMeasuredWidth) {
         this.labelMeasuredWidth = null;
       }
+      if (this.forceSingleLineLabel) {
+        this.forceSingleLineLabel = false;
+      }
       this._singleLineLabelAdjustment = false;
+      return;
+    }
+
+    const fullWidth = this._measureTextWidth(content, computed);
+    const fitsSingleLine = !!fullWidth && fullWidth <= this.maxLabelWidth + 2;
+    if (this.forceSingleLineLabel !== fitsSingleLine) {
+      this.forceSingleLineLabel = fitsSingleLine;
+    }
+
+    if (fitsSingleLine) {
+      if (this.labelMeasuredWidth) {
+        this.labelMeasuredWidth = null;
+      }
+      this._singleLineLabelAdjustment = true;
       return;
     }
 
@@ -437,6 +459,25 @@ export default class OrbatNode extends Component {
 
     widestLine = Math.max(widestLine, currentWidth);
     return widestLine;
+  }
+
+  _measureTextWidth(text, computedStyle) {
+    const ctx = this._getMeasureContext();
+    if (!ctx || !text) {
+      return 0;
+    }
+
+    const transformed = this._applyTextTransform(text, computedStyle.textTransform);
+    if (!transformed) {
+      return 0;
+    }
+
+    ctx.font = computedStyle.font || `${computedStyle.fontWeight} ${computedStyle.fontSize} ${computedStyle.fontFamily}`;
+    const letterSpacing = this._parseLetterSpacing(computedStyle.letterSpacing);
+    const metrics = ctx.measureText(transformed);
+    const baseWidth = metrics?.width || 0;
+    const spacingWidth = letterSpacing * Math.max(transformed.length - 1, 0);
+    return baseWidth + spacingWidth;
   }
 
   _applyTextTransform(text, transform) {

@@ -77,8 +77,37 @@ export default class OrbatTree extends Component {
     return this.errors.length > 0;
   }
 
-  get banner() {
-    return this.tree.banner || {};
+  get uniqueMemberCount() {
+    if (!this.nodes.length) {
+      return 0;
+    }
+
+    const seen = new Set();
+
+    const addUser = (user) => {
+      if (!user) {
+        return;
+      }
+
+      const key = user.id ?? user.username ?? user.name;
+      if (key === undefined || key === null || key === "") {
+        return;
+      }
+
+      seen.add(`${key}`);
+    };
+
+    const walk = (node) => {
+      (node.users || []).forEach(addUser);
+      (node.children || []).forEach(walk);
+    };
+
+    this.nodes.forEach(walk);
+    return seen.size;
+  }
+
+  get showMemberCount() {
+    return this.uniqueMemberCount > 0;
   }
 
   resolveImage(filename) {

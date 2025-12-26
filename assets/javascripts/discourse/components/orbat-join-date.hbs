@@ -1,0 +1,32 @@
+{{! template-lint-disable require-strict-mode}}
+<div class="display-row orbat-join-date" {{did-update this.syncJoinDate @user.orbat_join_date}}>
+  <div class="field">{{i18n "orbat_admin.user_join_date.label"}}</div>
+  <div class="value">
+    <Input
+      @type="date"
+      @value={{this.joinDate}}
+      @disabled={{this.isSaving}}
+      {{on "input" this.updateJoinDate}}
+    />
+  </div>
+  <div class="controls">
+    <div class="orbat-join-date__controls">
+      <DButton
+        @label="orbat_admin.user_join_date.save"
+        @action={{this.saveJoinDate}}
+        @disabled={{this.saveDisabled}}
+        class="btn-default btn-small"
+      />
+      {{#if this.hasManualDate}}
+        <DButton
+          @label="orbat_admin.user_join_date.remove"
+          @action={{this.removeJoinDate}}
+          class="btn-danger btn-small"
+        />
+      {{/if}}
+    </div>
+    <div class="orbat-join-date__help">
+      {{i18n "orbat_admin.user_join_date.help"}}
+    </div>
+  </div>
+</div>

@@ -16,6 +16,11 @@ enabled_site_setting :orbat_enabled
 add_admin_route "orbat_admin.nav_title", "orbat"
 
 after_initialize do
+  register_user_custom_field_type(::Orbat::Service::JOIN_DATE_FIELD, :string, max_length: 10)
+  add_to_serializer(:admin_detailed_user, :orbat_join_date) do
+    object.custom_fields[::Orbat::Service::JOIN_DATE_FIELD]
+  end
+
   on(:group_user_created)  { ::Orbat::Service.clear_cache }
   on(:group_user_destroyed){ ::Orbat::Service.clear_cache }
 
@@ -101,6 +106,33 @@ after_initialize do
         render_json_error(e.message)
       end
     end
+
+    class AdminUsersController < ::Admin::AdminController
+      requires_plugin ::Orbat::PLUGIN_NAME
+
+      def update_join_date
+        user = User.find(params[:id])
+        guardian.ensure_can_edit!(user)
+
+        join_date = params[:join_date].presence
+        if join_date
+          parsed = Date.iso8601(join_date) rescue nil
+          unless parsed
+            render_json_error(I18n.t("orbat_admin.errors.invalid_join_date"), status: 422)
+            return
+          end
+          user.custom_fields[::Orbat::Service::JOIN_DATE_FIELD] = parsed.iso8601
+        else
+          user.custom_fields.delete(::Orbat::Service::JOIN_DATE_FIELD)
+        end
+
+        user.save_custom_fields
+        ::Orbat::Service.clear_cache
+        render_json_dump(join_date: user.custom_fields[::Orbat::Service::JOIN_DATE_FIELD])
+      rescue ActiveRecord::RecordNotFound
+        raise Discourse::NotFound
+      end
+    end
   end
 
 
@@ -111,5 +143,6 @@ after_initialize do
     get "/admin/plugins/orbat.json" => "orbat/admin#show"
     post "/admin/plugins/orbat/preview" => "orbat/admin#preview"
     post "/admin/plugins/orbat/restore" => "orbat/admin#restore"
+    put "/admin/users/:id/orbat-join-date" => "orbat/admin_users#update_join_date"
   end
 end

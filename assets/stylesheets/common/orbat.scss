@@ -38,6 +38,7 @@
   min-height: 0;
   overflow-x: auto;
   align-self: stretch;
+  position: relative;
 }
 
 .orbat-page__canvas-inner {
@@ -47,6 +48,26 @@
   gap: 28px;
   width: max-content;
   margin: 0 auto;
+}
+
+.orbat-page__member-count {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 0 6px 6px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.orbat-page__member-count-text {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  color: var(--primary-800);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  pointer-events: auto;
 }
 
 .orbat-page__masthead {
@@ -125,10 +146,6 @@
 
 .orbat-tree__container--loading .orbat-tree {
   visibility: hidden;
-}
-
-.orbat-tree--loading {
-  display: none;
 }
 
 .orbat-tree__loader {
@@ -354,7 +371,7 @@
 }
 
 .orbat-node__card {
-  background: var(--spectrum-global-color-gray-50);
+  background: #080808;
   border: 1px solid var(--primary-300);
   border-radius: 8px;
   box-shadow: 0 10px 24px rgb(15 23 42 / 5%);
@@ -427,14 +444,15 @@
 }
 
 .orbat-node__label-text {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   text-align: left;
   line-height: 1.2;
   max-width: 96px;
 }
 
 .orbat-node__header--with-icon .orbat-node__label-text {
-  max-width: 72px;
+  max-width: 80px;
 }
 
 .orbat-node__description {
@@ -518,6 +536,18 @@ body.orbat-view .powered-by-discourse {
   display: none !important;
 }
 
+.orbat-join-date__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.orbat-join-date__help {
+  margin-top: 4px;
+  font-size: 0.875em;
+  color: var(--primary-600);
+}
 
 .orbat-admin__settings {
   display: flex;

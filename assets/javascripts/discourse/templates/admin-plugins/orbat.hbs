@@ -58,10 +58,11 @@
                 <summary>{{i18n "orbat_admin.editor.guide_summary"}}</summary>
                 <div class="orbat-admin__guide-body">
                   <p>
-                    Build the ORBAT by combining high-level metadata with a
-                    <code>nodes</code> array that defines each unit. Every node
-                    can resolve users from groups, show placeholders, and nest
-                    children to create the tree.
+                    Build the ORBAT by combining top-level metadata with a
+                    <code>nodes</code> array. Each node can resolve members from
+                    Discourse groups and nest children to create the tree. The
+                    only required pieces are <code>nodes</code> and a
+                    <code>label</code> for each node.
                   </p>
 
                   <h4>Top-level keys</h4>
@@ -71,85 +72,95 @@
                       masthead text.
                     </li>
                     <li>
-                      <code>banner</code> optionally shows an image (relative to
-                      the plugin’s <code>public/images</code> directory or a full
-                      URL).
-                    </li>
-                    <li>
                       <code>display</code> controls global behaviour (spacing,
                       columns, empty placeholders, etc.).
                     </li>
                     <li>
-                      <code>rankPriority</code> and
-                      <code>groupPriority</code> influence ordering when sorting
-                      members.
+                      <code>rankPriority</code> defines how ranks are ordered
+                      within a group.
                     </li>
                     <li>
                       <code>nodes</code> is an array of unit definitions; the
                       order you provide is preserved on the root level unless you
                       group them via <code>display.rootSections</code>.
                     </li>
+                    <li>
+                      <code>banner</code> is reserved for custom themes and is
+                      not rendered by the default ORBAT page.
+                    </li>
                   </ul>
 
                   <h4>Display options</h4>
                   <dl class="orbat-admin__guide-dl">
+                    <dt><code>showEmpty</code></dt>
+                    <dd>
+                      Keep empty units in the tree. When false, empty nodes are
+                      pruned unless <code>alwaysShow</code> is true on the node.
+                    </dd>
+                    <dt><code>emptyLabel</code></dt>
+                    <dd>
+                      Fallback placeholder text when a node has no members.
+                    </dd>
+                    <dt><code>showAvatars</code></dt>
+                    <dd>
+                      Show user avatars next to names.
+                    </dd>
+                    <dt><code>maxPerColumn</code></dt>
+                    <dd>
+                      Maximum users per column before wrapping.
+                    </dd>
                     <dt><code>rootLayout</code></dt>
                     <dd>
                       <code>"row"</code> (default) or <code>"column"</code>; sets
                       how top-level nodes are laid out.
                     </dd>
-                    <dt><code>rootColumns</code></dt>
-                    <dd>
-                      When set, constrains the number of columns for root rows
-                      (e.g. <code>3</code>).
-                    </dd>
-                    <dt><code>gap</code></dt>
-                    <dd>
-                      Accepts tokens <code>"xs"</code>, <code>"sm"</code>,
-                      <code>"md"</code>, <code>"lg"</code>, <code>"xl"</code>, or
-                      a pixel value (e.g. <code>"32px"</code>).
-                    </dd>
                     <dt><code>rootSections</code></dt>
                     <dd>
                       Optional array to add headings and custom layouts for code
                       prefixes. Each entry supports:
-                      <code>prefixes</code>, <code>title</code>,
-                      <code>subtitle</code>, <code>description</code>,
-                      <code>layout</code>, <code>showEmpty</code>, and
-                      <code>emptyLabel</code>.
+                      <code>prefixes</code> (or <code>prefix</code>/<code>codes</code>),
+                      <code>title</code>, <code>subtitle</code>,
+                      <code>description</code>, <code>layout</code> (with
+                      <code>type</code>, <code>columns</code>, <code>gap</code>),
+                      <code>showEmpty</code>, and <code>emptyLabel</code>.
                     </dd>
                   </dl>
+                  <p>
+                    Note: <code>display.gap</code>, <code>display.rootColumns</code>,
+                    and <code>display.hideGroupLinks</code> are not used by the
+                    default ORBAT UI, but are kept for custom themes.
+                  </p>
 
                   <h4>Node structure</h4>
                   <p>
-                    Each node requires a unique <code>id</code> and <code>code</code>.
-                    Dots inside the code (for example <code>"1.2.3"</code>)
-                    automatically establish parent/child relationships. Common
-                    properties include:
+                    Each node should have a unique <code>code</code>;
+                    <code>id</code> is recommended. If omitted, they are derived
+                    from <code>label</code>. Dots inside the code (for example
+                    <code>"1.2.3"</code>) help establish parent/child
+                    relationships. Common properties include:
                   </p>
                   <ul class="orbat-admin__guide-list">
-                    <li><code>label</code>: visible title for the unit.</li>
+                    <li><code>label</code>: visible title for the unit (required).</li>
+                    <li><code>description</code>: optional body text.</li>
                     <li>
                       <code>theme</code>: optional styling token (e.g.
                       <code>"company"</code>, <code>"platoon"</code>).
                     </li>
                     <li>
-                      <code>badge</code>, <code>icon</code>,
-                      <code>labelFontSize</code>: control visual extras.
+                      <code>badge</code> and <code>icon</code>: image paths or
+                      URLs. Relative paths resolve to this plugin's
+                      <code>public/images</code> directory.
                     </li>
                     <li>
-                      <code>layout</code>: object with <code>type</code>
-                      (<code>"row"</code> or <code>"column"</code>), optional
-                      <code>gap</code>, <code>align</code>,
-                      <code>justify</code>, <code>columns</code>, and
-                      <code>wrap</code>.
+                      <code>badgeWidth</code> and <code>labelFontSize</code>:
+                      numeric pixel values.
                     </li>
                     <li>
                       <code>select</code>: resolves users. Use
                       <code>any</code>, <code>all</code>, <code>not</code>,
-                      <code>sort</code> (<code>"rankPriority"</code> or
-                      <code>"joined"</code>), <code>limit</code>,
-                      <code>includeHidden</code>, and <code>placeholder</code>.
+                      <code>limit</code>, <code>includeHidden</code>, and
+                      <code>placeholder</code>. Group names must match
+                      Discourse group names.
                     </li>
                     <li>
                       <code>children</code>: array of nested nodes using the same
@@ -160,40 +171,77 @@
                       visibility or suppress the card while leaving connectors.
                     </li>
                   </ul>
+                  <p>
+                    Ordering is fixed: members are listed by the order of group
+                    names in <code>select.any</code>/<code>select.all</code> for
+                    that node, then by <code>rankPriority</code>, then by join
+                    date (manual 16AA Join Date if set, otherwise forum join
+                    date), then alphabetically. Place IC/2IC groups early in
+                    <code>select.any</code>. Sorting cannot be overridden per
+                    node.
+                  </p>
+                  <p>
+                    <code>layout</code> on nodes is accepted and preserved in the
+                    JSON output, but the default ORBAT UI does not currently use
+                    it.
+                  </p>
 
                   <h4>Starter template</h4>
                   <pre class="orbat-admin__guide-code"><code class="lang-json">{
   "title": "ORBAT",
-  "subtitle": "Unit Name",
+  "subtitle": "16 Air Assault Brigade",
   "banner": null,
   "display": {
     "showEmpty": true,
-    "hideGroupLinks": false,
-    "showAvatars": true,
+    "hideGroupLinks": true,
+    "showAvatars": false,
     "maxPerColumn": 12,
     "rootLayout": "row",
-    "rootColumns": 2,
-    "gap": "md",
+    "gap": "sm",
     "emptyLabel": "-",
     "rootSections": [
-      { "prefixes": ["1"], "title": "Primary Formation" },
-      { "prefixes": ["2"], "title": "Support Assets", "subtitle": "Sustainment & specialists" }
+      {
+        "prefixes": ["1"],
+        "title": ""
+      },
+      {
+        "prefixes": ["2"],
+        "title": "Community Support Arms"
+      }
     ]
   },
   "rankPriority": [
     "Major",
+    "Squadron_Leader",
     "Captain",
+    "Flight_Lieutenant",
     "Lieutenant",
+    "Flying_Officer",
+    "Second_Lieutenant",
+    "Pilot_Officer",
+    "Acting_Second_Lieutenant",
+    "Warrant_Officer_Class_2",
+    "Colour_Sergeant",
+    "Staff_Sergeant",
+    "Flight_Sergeant_Aircrew",
     "Sergeant",
-    "Corporal"
-  ],
-  "groupPriority": [
-    "HQ_Command",
-    "Support_Command"
+    "Sergeant_Aircrew",
+    "Acting_Sergeant",
+    "Corporal",
+    "Bombardier",
+    "Acting_Corporal",
+    "Acting_Bombardier",
+    "Lance_Corporal",
+    "Lance_Bombardier",
+    "Acting_Lance_Corporal",
+    "Acting_Lance_Bombardier",
+    "Private",
+    "Gunner",
+    "Recruit"
   ],
   "nodes": [
     {
-      "id": "main-hq",
+      "id": "coy-hq",
       "code": "1",
       "label": "A Company HQ",
       "theme": "company",
@@ -202,9 +250,7 @@
       "icon": "hq.png",
       "labelFontSize": "9",
       "select": {
-        "any": ["Coy_IC", "Coy_2IC", "CSM"],
-        "placeholder": "Vacant",
-        "sort": "rankPriority"
+        "any": ["Coy_IC", "Coy_2IC", "CSM"]
       },
       "layout": {
         "type": "row",
@@ -220,8 +266,7 @@
           "badge": "ab_inf_pl.svg",
           "icon": "red_hq.png",
           "select": {
-            "any": ["1_Platoon_IC", "1_Platoon_2IC"],
-            "sort": "rankPriority"
+            "any": ["1_Platoon_IC", "1_Platoon_2IC"]
           },
           "layout": {
             "type": "column",
@@ -236,15 +281,12 @@
               "theme": "section",
               "badge": "ab_inf_sec.svg",
               "icon": "red_1.png",
+              "select": {
+                "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"]
+              },
               "layout": {
                 "type": "column",
-                "gap": "xs",
-                "justify": "center"
-              },
-              "select": {
-                "any": ["1-1_Section"],
-                "all": ["Qualified_JNCOs"],
-                "sort": "rankPriority"
+                "align": "center"
               },
               "alwaysShow": true
             },
@@ -255,15 +297,12 @@
               "theme": "section",
               "badge": "ab_inf_sec.svg",
               "icon": "red_2.png",
-              "layout": {
-                "type": "row",
-                "gap": "xs",
-                "wrap": false,
-                "align": "center"
-              },
               "select": {
-                "any": ["1-2_Section"],
-                "placeholder": "Assigning..."
+                "any": ["1-2_Section_IC", "1-2_Section_2IC", "1-2_Section"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
               },
               "alwaysShow": true
             },
@@ -275,16 +314,11 @@
               "badge": "ab_inf_sec.svg",
               "icon": "red_3.png",
               "select": {
-                "any": ["1-3_Section"],
-                "not": ["On_Leave"],
-                "limit": 8,
-                "includeHidden": true,
-                "sort": "joined",
-                "placeholder": "Awaiting approval"
+                "any": ["1-3_Section_IC", "1-3_Section_2IC", "1-3_Section"]
               },
               "layout": {
                 "type": "column",
-                "columns": 2
+                "align": "center"
               },
               "alwaysShow": true
             }
@@ -298,8 +332,7 @@
           "badge": "ab_inf_css_pl.svg",
           "icon": "black_hq.png",
           "select": {
-            "any": ["4_Platoon_IC", "4_Platoon_2IC"],
-            "sort": "rankPriority"
+            "any": ["4_Platoon_IC", "4_Platoon_2IC"]
           },
           "layout": {
             "type": "column",
@@ -315,11 +348,11 @@
               "badge": "ab_inf_ms_sec.svg",
               "icon": "black_1.png",
               "select": {
-                "any": ["Fire_Support_Group"],
-                "sort": "rankPriority"
+                "any": ["Fire_Support_Group_IC", "Fire_Support_Group_2IC", "Fire_Support_Group"]
               },
               "layout": {
-                "type": "column"
+                "type": "column",
+                "align": "center"
               },
               "alwaysShow": true
             },
@@ -331,22 +364,61 @@
               "badge": "ab_inf_sec.svg",
               "icon": "black_2.png",
               "select": {
-                "any": ["Force_Protection"]
+                "any": ["Force_Protection_IC", "Force_Protection_2IC", "Force_Protection"]
               },
               "layout": {
-                "type": "column"
+                "type": "column",
+                "align": "center"
               },
               "alwaysShow": true
             },
             {
-              "id": "logistics-cell",
-              "code": "1.4.6",
-              "label": "Logistics Cell",
-              "theme": "support",
-              "badge": "logi.svg",
-              "select": { "any": ["Logistics_Cell"] },
-              "layout": { "type": "row" },
-              "hideNode": true
+              "id": "13-air-assault-support-regiment",
+              "code": "1.4.3",
+              "label": "13 Air Assault Support Regiment",
+              "theme": "section",
+              "badge": "ab_inf_logi_eod_sec.svg",
+              "icon": "black_3.png",
+              "select": {
+                "any": ["13AASR_IC", "13AASR_2IC", "13AASR"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
+              "alwaysShow": true
+            },
+            {
+              "id": "16-close-support-medical-regiment",
+              "code": "1.4.4",
+              "label": "16 Close Support Medical Regiment",
+              "theme": "section",
+              "badge": "ab_inf_mdcl_sec.svg",
+              "icon": "black_4.png",
+              "select": {
+                "any": ["16CSMR_IC", "16CSMR_2IC", "16CSMR"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
+              "alwaysShow": true
+            },
+            {
+              "id": "reserves",
+              "code": "1.4.5",
+              "label": "Reserves",
+              "theme": "section",
+              "badge": "ab_inf_sup_sec.svg",
+              "icon": "",
+              "select": {
+                "any": ["Reserves"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
+              "alwaysShow": true
             }
           ]
         },
@@ -356,10 +428,13 @@
           "label": "Attachments",
           "theme": "platoon",
           "badge": "atts_coy.svg",
-          "layout": { "type": "column", "gap": "sm" },
+          "icon": "",
           "select": {
-            "any": ["Attachments"],
-            "placeholder": "-"
+            "any": ["Attachments_IC", "Attachments_2IC"]
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
           },
           "alwaysShow": true,
           "children": [
@@ -370,8 +445,13 @@
               "theme": "section",
               "badge": "rot_wing_coy.svg",
               "icon": "JHC.png",
-              "select": { "any": ["JHC"] },
-              "layout": { "type": "column" },
+              "select": {
+                "any": ["JHC_IC", "JHC_2IC", "JHC"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
               "alwaysShow": true
             },
             {
@@ -380,26 +460,46 @@
               "label": "7 Royal Horse Artillery",
               "theme": "section",
               "icon": "7RHA.png",
-              "select": { "any": ["7RHA"] },
-              "layout": { "type": "column" },
+              "hideNode": true,
+              "select": {
+                "any": [""]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
               "alwaysShow": true,
               "children": [
                 {
                   "id": "battery",
                   "code": "1.5.2.1",
                   "label": "Battery",
+                  "theme": "section",
                   "badge": "ab_art_batt.svg",
-                  "select": { "any": ["7RHA_Battery"] },
-                  "layout": { "type": "column" },
+                  "icon": "",
+                  "select": {
+                    "any": ["7RHA_IC", "7RHA_2IC", "7RHA"]
+                  },
+                  "layout": {
+                    "type": "column",
+                    "align": "center"
+                  },
                   "alwaysShow": true
                 },
                 {
                   "id": "fst",
                   "code": "1.5.2.2",
                   "label": "Fire Support Team",
+                  "theme": "section",
                   "badge": "ab_fst.svg",
-                  "select": { "any": ["FST"] },
-                  "layout": { "type": "column" },
+                  "icon": "",
+                  "select": {
+                    "any": ["FST_IC", "FST_2IC", "FST"]
+                  },
+                  "layout": {
+                    "type": "column",
+                    "align": "center"
+                  },
                   "alwaysShow": true
                 }
               ]
@@ -411,8 +511,13 @@
               "theme": "section",
               "badge": "mi_ft.svg",
               "icon": "MI.png",
-              "select": { "any": ["MI"], "sort": "rankPriority" },
-              "layout": { "type": "column" },
+              "select": {
+                "any": ["MI_IC", "MI_2IC", "MI"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
               "alwaysShow": true
             }
           ]
@@ -420,16 +525,31 @@
       ]
     },
     {
-      "id": "support-hq",
+      "id": "hq",
       "code": "2",
-      "label": "Support HQ",
+      "label": "HQ",
       "theme": "company",
-      "badge": "adm_pl.svg",
       "labelFontSize": "9",
-      "layout": { "type": "column" },
+      "badge": "adm_pl.svg",
+      "icon": "",
       "select": {
-        "any": ["Support_Command"],
-        "placeholder": "-"
+        "any": [
+          "Coy_IC",
+          "Coy_2IC",
+          "CSM",
+          "REME_IC",
+          "RRO_IC",
+          "RLC_IC",
+          "3LSR_IC",
+          "ITC_IC",
+          "1_Platoon_IC",
+          "4_Platoon_IC",
+          "Attachments_IC"
+        ]
+      },
+      "layout": {
+        "type": "column",
+        "align": "center"
       },
       "alwaysShow": true,
       "children": [
@@ -440,8 +560,13 @@
           "theme": "section",
           "badge": "reme_sec.svg",
           "icon": "REME.png",
-          "select": { "any": ["REME"] },
-          "layout": { "type": "column" },
+          "select": {
+            "any": ["REME_IC", "REME_2IC", "REME"]
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
           "alwaysShow": true
         },
         {
@@ -450,8 +575,13 @@
           "label": "RRO",
           "theme": "section",
           "badge": "rro_sec.svg",
-          "select": { "any": ["RRO"] },
-          "layout": { "type": "column" },
+          "select": {
+            "any": ["RRO_IC", "RRO_2IC", "RRO"]
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
           "alwaysShow": true,
           "children": [
             {
@@ -460,8 +590,13 @@
               "label": "Media",
               "theme": "section",
               "badge": "media_sec.svg",
-              "select": { "any": ["Media"], "sort": "joined" },
-              "layout": { "type": "column" },
+              "select": {
+                "any": ["Media_IC", "Media_2IC", "Media"]
+              },
+              "layout": {
+                "type": "column",
+                "align": "center"
+              },
               "alwaysShow": true
             }
           ]
@@ -473,8 +608,13 @@
           "theme": "section",
           "badge": "rlc_sec.svg",
           "icon": "RLC.png",
-          "select": { "any": ["RLC"] },
-          "layout": { "type": "column" },
+          "select": {
+            "any": ["RLC_IC", "RLC_2IC", "RLC"]
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
           "alwaysShow": true
         },
         {
@@ -484,8 +624,13 @@
           "theme": "section",
           "badge": "3lsr_sec.svg",
           "icon": "RLC.png",
-          "select": { "any": ["3LSR"] },
-          "layout": { "type": "column" },
+          "select": {
+            "any": ["3LSR_IC", "3LSR_2IC", "3LSR"]
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
           "alwaysShow": true
         },
         {
@@ -495,8 +640,13 @@
           "theme": "section",
           "badge": "itc_sec.svg",
           "icon": "ITC.png",
-          "select": { "any": ["ITC"] },
-          "layout": { "type": "column" },
+          "select": {
+            "any": ["ITC_IC", "ITC_2IC", "ITC"]
+          },
+          "layout": {
+            "type": "column",
+            "align": "center"
+          },
           "alwaysShow": true
         }
       ]
