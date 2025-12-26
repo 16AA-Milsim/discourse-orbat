@@ -5,6 +5,7 @@
     (if this.hasChildren " orbat-branch__item--has-children" "")
     (if this.hasSingleChild " orbat-branch__item--single-child" "")
   }}
+  style={{this.branchStyle}}
   {{did-insert this.setupElement}}
   {{did-update this.updateElement this.children.length}}
 >

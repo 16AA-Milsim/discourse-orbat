@@ -23,6 +23,7 @@ export default class AdminPluginsOrbatController extends Controller {
   @tracked orbatAdminOnly = false;
   @tracked updatingEnabled = false;
   @tracked updatingAdminOnly = false;
+  @tracked validationWarnings = [];
 
   formApi = null;
   _pendingFormSync = false;
@@ -52,6 +53,7 @@ export default class AdminPluginsOrbatController extends Controller {
     this.notice = null;
     this.previewState = "idle";
     this.isLoaded = true;
+    this.#updateValidationWarnings(configuration);
     this._queueFormSync();
   }
 
@@ -75,12 +77,15 @@ export default class AdminPluginsOrbatController extends Controller {
 
     const raw = draftData?.configuration;
     if (!raw || raw.trim().length === 0) {
+      this.validationWarnings = [];
       return;
     }
 
     try {
-      JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      this.validationWarnings = this.#buildValidationWarnings(parsed);
     } catch (error) {
+      this.validationWarnings = [];
       helpers.addError("configuration", {
         title: i18n("orbat_admin.editor.heading"),
         message: error.message,
@@ -307,5 +312,156 @@ export default class AdminPluginsOrbatController extends Controller {
     } catch (error) {
       return "";
     }
+  }
+
+  #updateValidationWarnings(raw) {
+    if (!raw) {
+      this.validationWarnings = [];
+      return;
+    }
+
+    try {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      this.validationWarnings = this.#buildValidationWarnings(parsed);
+    } catch (error) {
+      this.validationWarnings = [];
+    }
+  }
+
+  #buildValidationWarnings(config) {
+    const warnings = [];
+    if (!config || typeof config !== "object") {
+      return warnings;
+    }
+
+    const nodes = config.nodes;
+    const codeSet = new Set();
+    const idSet = new Set();
+
+    if (!Array.isArray(nodes)) {
+      warnings.push(i18n("orbat_admin.validation.missing_nodes"));
+    } else {
+      nodes.forEach((node) =>
+        this.#scanNode(node, warnings, codeSet, idSet)
+      );
+    }
+
+    const rankPriority = Array.isArray(config.rankPriority)
+      ? config.rankPriority
+      : [];
+    const rankDuplicates = this.#findDuplicates(rankPriority);
+    if (rankDuplicates.length) {
+      warnings.push(
+        i18n("orbat_admin.validation.rank_priority_duplicates", {
+          values: rankDuplicates.join(", "),
+        })
+      );
+    }
+
+    const rootSections = config.display?.rootSections;
+    if (Array.isArray(rootSections)) {
+      rootSections.forEach((section) => {
+        const prefixes = []
+          .concat(section?.prefixes || [])
+          .concat(section?.prefix || [])
+          .concat(section?.codes || [])
+          .map((value) => `${value}`.trim())
+          .filter(Boolean);
+
+        if (!prefixes.length) {
+          warnings.push(i18n("orbat_admin.validation.empty_root_section"));
+        }
+      });
+    }
+
+    return warnings;
+  }
+
+  #scanNode(node, warnings, codeSet, idSet) {
+    if (!node || typeof node !== "object") {
+      return;
+    }
+
+    const label = `${node.label || ""}`.trim();
+    const code = `${node.code || ""}`.trim();
+    const id = `${node.id || ""}`.trim();
+    const labelForWarning =
+      label || code || id || i18n("orbat_admin.validation.unnamed_node");
+
+    if (!label) {
+      warnings.push(
+        i18n("orbat_admin.validation.missing_label", {
+          code: code || id || labelForWarning,
+        })
+      );
+    }
+
+    if (code) {
+      if (codeSet.has(code)) {
+        warnings.push(
+          i18n("orbat_admin.validation.duplicate_code", { code })
+        );
+      }
+      codeSet.add(code);
+    }
+
+    if (id) {
+      if (idSet.has(id)) {
+        warnings.push(i18n("orbat_admin.validation.duplicate_id", { id }));
+      }
+      idSet.add(id);
+    }
+
+    const select = node.select || {};
+    if (select && typeof select === "object") {
+      const entries = []
+        .concat(select.any || [])
+        .concat(select.all || []);
+      const hasEmpty = entries.some((value) => !`${value}`.trim());
+      if (hasEmpty) {
+        warnings.push(
+          i18n("orbat_admin.validation.empty_select", {
+            label: labelForWarning,
+          })
+        );
+      }
+
+      const sortValue = `${select.sort || ""}`.trim();
+      if (sortValue) {
+        const normalized = sortValue.toLowerCase();
+        const allowed = ["rank", "rank_only", "rank-only", "rankonly"];
+        if (!allowed.includes(normalized)) {
+          warnings.push(
+            i18n("orbat_admin.validation.invalid_sort", {
+              label: labelForWarning,
+              value: sortValue,
+            })
+          );
+        }
+      }
+    }
+
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach((child) =>
+      this.#scanNode(child, warnings, codeSet, idSet)
+    );
+  }
+
+  #findDuplicates(list) {
+    const seen = new Set();
+    const duplicates = new Set();
+
+    list
+      .map((value) => `${value}`.trim())
+      .filter(Boolean)
+      .forEach((value) => {
+        if (seen.has(value)) {
+          duplicates.add(value);
+        } else {
+          seen.add(value);
+        }
+      });
+
+    return Array.from(duplicates);
   }
 }

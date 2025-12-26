@@ -712,6 +712,8 @@ class ::Orbat::Service
         "badgeWidth" => definition["badgeWidth"] || definition["badge_width"],
         "icon" => definition["icon"],
         "labelFontSize" => definition["labelFontSize"] || definition["label_font_size"],
+        "marginLeft" => definition["marginLeft"] || definition["margin_left"],
+        "marginRight" => definition["marginRight"] || definition["margin_right"],
         "layout" => normalize_layout(definition["layout"]),
         "users" => users,
         "placeholder" => placeholder,
@@ -830,11 +832,13 @@ class ::Orbat::Service
     def sort_and_limit(users, select, context)
       limit = select && select["limit"]
       select_index = build_select_index(select)
+      sort_mode = select && select["sort"].to_s.downcase
+      rank_only = %w[rank rank_only rank-only rankonly].include?(sort_mode)
 
       sorted =
         users.sort_by do |user|
           [
-            best_group_index(user, context, select_index),
+            (rank_only ? 0 : best_group_index(user, context, select_index)),
             best_rank_only_index(user, context),
             best_join_date(user, context),
             user.username_lower

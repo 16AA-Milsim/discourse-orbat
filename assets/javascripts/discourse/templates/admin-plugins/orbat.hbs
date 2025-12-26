@@ -152,15 +152,17 @@
                       <code>public/images</code> directory.
                     </li>
                     <li>
-                      <code>badgeWidth</code> and <code>labelFontSize</code>:
-                      numeric pixel values.
+                      <code>badgeWidth</code>, <code>labelFontSize</code>,
+                      <code>marginLeft</code>, and <code>marginRight</code>:
+                      numeric pixel values (negative values reduce spacing).
                     </li>
                     <li>
                       <code>select</code>: resolves users. Use
                       <code>any</code>, <code>all</code>, <code>not</code>,
-                      <code>limit</code>, <code>includeHidden</code>, and
-                      <code>placeholder</code>. Group names must match
-                      Discourse group names.
+                      <code>limit</code>, <code>includeHidden</code>,
+                      <code>placeholder</code>, and optional
+                      <code>sort</code>. Group names must match Discourse group
+                      names.
                     </li>
                     <li>
                       <code>children</code>: array of nested nodes using the same
@@ -177,7 +179,9 @@
                     that node, then by <code>rankPriority</code>, then by join
                     date (manual 16AA Join Date if set, otherwise forum join
                     date), then alphabetically. Place IC/2IC groups early in
-                    <code>select.any</code>. Sorting cannot be overridden per
+                    <code>select.any</code>. To ignore group order and sort by
+                    rank only (then join date, then name), set
+                    <code>select.sort</code> to <code>"rank"</code> on that
                     node.
                   </p>
                   <p>
@@ -186,333 +190,117 @@
                     it.
                   </p>
 
-                  <h4>Starter template</h4>
+                  <h4>Example template</h4>
                   <pre class="orbat-admin__guide-code"><code class="lang-json">{
   "title": "ORBAT",
-  "subtitle": "16 Air Assault Brigade",
-  "banner": null,
+  "subtitle": "Example Unit",
+  "banner": {
+    "logo": "images/common/16th_air_assault.svg",
+    "title": "Banner Title",
+    "subtitle": "Banner Subtitle",
+    "background": "#0b1220",
+    "accent": "#f59e0b"
+  },
   "display": {
     "showEmpty": true,
-    "hideGroupLinks": true,
-    "showAvatars": false,
-    "maxPerColumn": 12,
-    "rootLayout": "row",
-    "gap": "sm",
     "emptyLabel": "-",
+    "showAvatars": false,
+    "maxPerColumn": 8,
+    "rootLayout": "row",
+    "rootColumns": 3,
+    "gap": "md",
+    "hideGroupLinks": true,
     "rootSections": [
       {
         "prefixes": ["1"],
-        "title": ""
+        "title": "Line Units",
+        "subtitle": "Main force",
+        "description": "Primary combat elements.",
+        "layout": {
+          "type": "row",
+          "columns": 2,
+          "gap": "sm"
+        },
+        "showEmpty": true,
+        "emptyLabel": "TBD"
       },
       {
-        "prefixes": ["2"],
-        "title": "Community Support Arms"
+        "codes": ["2"],
+        "title": "Support",
+        "subtitle": "Enablers",
+        "description": "Specialist detachments.",
+        "layout": {
+          "type": "column",
+          "columns": 1,
+          "gap": "lg"
+        },
+        "showEmpty": false,
+        "emptyLabel": "-"
       }
     ]
   },
   "rankPriority": [
     "Major",
-    "Squadron_Leader",
     "Captain",
-    "Flight_Lieutenant",
     "Lieutenant",
-    "Flying_Officer",
-    "Second_Lieutenant",
-    "Pilot_Officer",
-    "Acting_Second_Lieutenant",
-    "Warrant_Officer_Class_2",
-    "Colour_Sergeant",
-    "Staff_Sergeant",
-    "Flight_Sergeant_Aircrew",
     "Sergeant",
-    "Sergeant_Aircrew",
-    "Acting_Sergeant",
     "Corporal",
-    "Bombardier",
-    "Acting_Corporal",
-    "Acting_Bombardier",
-    "Lance_Corporal",
-    "Lance_Bombardier",
-    "Acting_Lance_Corporal",
-    "Acting_Lance_Bombardier",
-    "Private",
-    "Gunner",
-    "Recruit"
+    "Private"
   ],
   "nodes": [
     {
       "id": "coy-hq",
       "code": "1",
-      "label": "A Company HQ",
+      "label": "Company HQ",
+      "description": "Command element.",
       "theme": "company",
       "badge": "ab_inf_coy.svg",
-      "badgeWidth": "46",
+      "badgeWidth": 46,
       "icon": "hq.png",
-      "labelFontSize": "9",
+      "labelFontSize": 9,
+      "marginLeft": 6,
+      "marginRight": 6,
       "select": {
-        "any": ["Coy_IC", "Coy_2IC", "CSM"]
+        "any": ["Coy_IC", "Coy_2IC", "Coy"],
+        "not": ["LeaveOfAbsence"],
+        "limit": 5,
+        "includeHidden": false,
+        "placeholder": "Vacant"
       },
       "layout": {
         "type": "row",
+        "columns": 2,
+        "gap": "sm",
         "align": "center"
       },
       "alwaysShow": true,
       "children": [
         {
-          "id": "platoon-1-hq",
+          "id": "platoon-1",
           "code": "1.1",
           "label": "1 Platoon HQ",
           "theme": "platoon",
           "badge": "ab_inf_pl.svg",
           "icon": "red_hq.png",
           "select": {
-            "any": ["1_Platoon_IC", "1_Platoon_2IC"]
+            "all": ["1_Platoon"],
+            "sort": "rank"
           },
           "layout": {
             "type": "column",
             "align": "center"
           },
-          "alwaysShow": true,
           "children": [
             {
-              "id": "1-1-section",
+              "id": "section-a",
               "code": "1.1.1",
               "label": "1/1 Section",
               "theme": "section",
               "badge": "ab_inf_sec.svg",
               "icon": "red_1.png",
               "select": {
-                "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "1-2-section",
-              "code": "1.1.2",
-              "label": "1/2 Section",
-              "theme": "section",
-              "badge": "ab_inf_sec.svg",
-              "icon": "red_2.png",
-              "select": {
-                "any": ["1-2_Section_IC", "1-2_Section_2IC", "1-2_Section"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "1-3-section",
-              "code": "1.1.3",
-              "label": "1/3 Section",
-              "theme": "section",
-              "badge": "ab_inf_sec.svg",
-              "icon": "red_3.png",
-              "select": {
-                "any": ["1-3_Section_IC", "1-3_Section_2IC", "1-3_Section"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            }
-          ]
-        },
-        {
-          "id": "platoon-4-hq",
-          "code": "1.4",
-          "label": "4 Platoon HQ",
-          "theme": "platoon",
-          "badge": "ab_inf_css_pl.svg",
-          "icon": "black_hq.png",
-          "select": {
-            "any": ["4_Platoon_IC", "4_Platoon_2IC"]
-          },
-          "layout": {
-            "type": "column",
-            "align": "center"
-          },
-          "alwaysShow": true,
-          "children": [
-            {
-              "id": "fire-support-group",
-              "code": "1.4.1",
-              "label": "Fire Support Group",
-              "theme": "section",
-              "badge": "ab_inf_ms_sec.svg",
-              "icon": "black_1.png",
-              "select": {
-                "any": ["Fire_Support_Group_IC", "Fire_Support_Group_2IC", "Fire_Support_Group"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "force-protection",
-              "code": "1.4.2",
-              "label": "Force Protection",
-              "theme": "section",
-              "badge": "ab_inf_sec.svg",
-              "icon": "black_2.png",
-              "select": {
-                "any": ["Force_Protection_IC", "Force_Protection_2IC", "Force_Protection"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "13-air-assault-support-regiment",
-              "code": "1.4.3",
-              "label": "13 Air Assault Support Regiment",
-              "theme": "section",
-              "badge": "ab_inf_logi_eod_sec.svg",
-              "icon": "black_3.png",
-              "select": {
-                "any": ["13AASR_IC", "13AASR_2IC", "13AASR"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "16-close-support-medical-regiment",
-              "code": "1.4.4",
-              "label": "16 Close Support Medical Regiment",
-              "theme": "section",
-              "badge": "ab_inf_mdcl_sec.svg",
-              "icon": "black_4.png",
-              "select": {
-                "any": ["16CSMR_IC", "16CSMR_2IC", "16CSMR"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "reserves",
-              "code": "1.4.5",
-              "label": "Reserves",
-              "theme": "section",
-              "badge": "ab_inf_sup_sec.svg",
-              "icon": "",
-              "select": {
-                "any": ["Reserves"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            }
-          ]
-        },
-        {
-          "id": "attachments",
-          "code": "1.5",
-          "label": "Attachments",
-          "theme": "platoon",
-          "badge": "atts_coy.svg",
-          "icon": "",
-          "select": {
-            "any": ["Attachments_IC", "Attachments_2IC"]
-          },
-          "layout": {
-            "type": "column",
-            "align": "center"
-          },
-          "alwaysShow": true,
-          "children": [
-            {
-              "id": "joint-helicopter-command",
-              "code": "1.5.1",
-              "label": "Joint Helicopter Command",
-              "theme": "section",
-              "badge": "rot_wing_coy.svg",
-              "icon": "JHC.png",
-              "select": {
-                "any": ["JHC_IC", "JHC_2IC", "JHC"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            },
-            {
-              "id": "7-royal-horse-artillery",
-              "code": "1.5.2",
-              "label": "7 Royal Horse Artillery",
-              "theme": "section",
-              "icon": "7RHA.png",
-              "hideNode": true,
-              "select": {
-                "any": [""]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true,
-              "children": [
-                {
-                  "id": "battery",
-                  "code": "1.5.2.1",
-                  "label": "Battery",
-                  "theme": "section",
-                  "badge": "ab_art_batt.svg",
-                  "icon": "",
-                  "select": {
-                    "any": ["7RHA_IC", "7RHA_2IC", "7RHA"]
-                  },
-                  "layout": {
-                    "type": "column",
-                    "align": "center"
-                  },
-                  "alwaysShow": true
-                },
-                {
-                  "id": "fst",
-                  "code": "1.5.2.2",
-                  "label": "Fire Support Team",
-                  "theme": "section",
-                  "badge": "ab_fst.svg",
-                  "icon": "",
-                  "select": {
-                    "any": ["FST_IC", "FST_2IC", "FST"]
-                  },
-                  "layout": {
-                    "type": "column",
-                    "align": "center"
-                  },
-                  "alwaysShow": true
-                }
-              ]
-            },
-            {
-              "id": "military-intelligence",
-              "code": "1.5.3",
-              "label": "Military Intelligence",
-              "theme": "section",
-              "badge": "mi_ft.svg",
-              "icon": "MI.png",
-              "select": {
-                "any": ["MI_IC", "MI_2IC", "MI"]
+                "any": ["1-1_Section_IC", "1-1_Section_2IC", "1-1_Section"],
+                "includeHidden": true
               },
               "layout": {
                 "type": "column",
@@ -525,123 +313,29 @@
       ]
     },
     {
-      "id": "hq",
+      "id": "attachments",
       "code": "2",
-      "label": "HQ",
-      "theme": "company",
-      "labelFontSize": "9",
-      "badge": "adm_pl.svg",
-      "icon": "",
+      "label": "Attachments",
+      "theme": "support",
+      "badge": "atts_coy.svg",
+      "hideNode": true,
       "select": {
-        "any": [
-          "Coy_IC",
-          "Coy_2IC",
-          "CSM",
-          "REME_IC",
-          "RRO_IC",
-          "RLC_IC",
-          "3LSR_IC",
-          "ITC_IC",
-          "1_Platoon_IC",
-          "4_Platoon_IC",
-          "Attachments_IC"
-        ]
+        "any": ["Attachments"]
       },
       "layout": {
         "type": "column",
         "align": "center"
       },
-      "alwaysShow": true,
       "children": [
         {
-          "id": "reme",
+          "id": "joint-helicopter-command",
           "code": "2.1",
-          "label": "REME",
+          "label": "Joint Helicopter Command",
           "theme": "section",
-          "badge": "reme_sec.svg",
-          "icon": "REME.png",
+          "badge": "rot_wing_coy.svg",
+          "icon": "JHC.png",
           "select": {
-            "any": ["REME_IC", "REME_2IC", "REME"]
-          },
-          "layout": {
-            "type": "column",
-            "align": "center"
-          },
-          "alwaysShow": true
-        },
-        {
-          "id": "rro",
-          "code": "2.2",
-          "label": "RRO",
-          "theme": "section",
-          "badge": "rro_sec.svg",
-          "select": {
-            "any": ["RRO_IC", "RRO_2IC", "RRO"]
-          },
-          "layout": {
-            "type": "column",
-            "align": "center"
-          },
-          "alwaysShow": true,
-          "children": [
-            {
-              "id": "media",
-              "code": "2.2.1",
-              "label": "Media",
-              "theme": "section",
-              "badge": "media_sec.svg",
-              "select": {
-                "any": ["Media_IC", "Media_2IC", "Media"]
-              },
-              "layout": {
-                "type": "column",
-                "align": "center"
-              },
-              "alwaysShow": true
-            }
-          ]
-        },
-        {
-          "id": "rlc",
-          "code": "2.3",
-          "label": "RLC",
-          "theme": "section",
-          "badge": "rlc_sec.svg",
-          "icon": "RLC.png",
-          "select": {
-            "any": ["RLC_IC", "RLC_2IC", "RLC"]
-          },
-          "layout": {
-            "type": "column",
-            "align": "center"
-          },
-          "alwaysShow": true
-        },
-        {
-          "id": "3lsr",
-          "code": "2.4",
-          "label": "3LSR",
-          "theme": "section",
-          "badge": "3lsr_sec.svg",
-          "icon": "RLC.png",
-          "select": {
-            "any": ["3LSR_IC", "3LSR_2IC", "3LSR"]
-          },
-          "layout": {
-            "type": "column",
-            "align": "center"
-          },
-          "alwaysShow": true
-        },
-        {
-          "id": "itc",
-          "code": "2.5",
-          "label": "ITC",
-          "theme": "section",
-          "badge": "itc_sec.svg",
-          "icon": "ITC.png",
-          "select": {
-            "any": ["ITC_IC", "ITC_2IC", "ITC"]
+            "any": ["JHC_IC", "JHC_2IC", "JHC"]
           },
           "layout": {
             "type": "column",
@@ -671,6 +365,22 @@
               >
                 <field.Code @lang="javascript" @height={{420}} />
               </form.Field>
+
+              {{#if this.validationWarnings.length}}
+                <div class="alert alert-warning orbat-admin__validation">
+                  <div class="orbat-admin__validation-title">
+                    {{i18n "orbat_admin.validation.heading"}}
+                  </div>
+                  <div class="orbat-admin__validation-help">
+                    {{i18n "orbat_admin.validation.help"}}
+                  </div>
+                  <ul class="orbat-admin__validation-list">
+                    {{#each this.validationWarnings as |warning|}}
+                      <li>{{warning}}</li>
+                    {{/each}}
+                  </ul>
+                </div>
+              {{/if}}
             </form.Container>
 
             <form.Actions>

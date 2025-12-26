@@ -26,6 +26,8 @@ export default class OrbatTree extends Component {
   _expectedNodes = 0;
   _rootElement = null;
   _readyTimeout = null;
+  _readyToken = 0;
+  _finalizingReady = false;
   _canvasElement = null;
   _scrollbarElement = null;
   _refreshFrame = null;
@@ -470,6 +472,8 @@ export default class OrbatTree extends Component {
   registerRoot(element) {
     this._rootElement = element;
     this.isReady = false;
+    this._finalizingReady = false;
+    this._readyToken += 1;
     this.scrollbarContentWidth = null;
     this.scrollbarViewportWidth = null;
     this._readyCount = 0;
@@ -480,6 +484,8 @@ export default class OrbatTree extends Component {
   @action
   resetReady() {
     this.isReady = false;
+    this._finalizingReady = false;
+    this._readyToken += 1;
     this.scrollbarContentWidth = null;
     this.scrollbarViewportWidth = null;
     this._readyCount = 0;
@@ -555,19 +561,42 @@ export default class OrbatTree extends Component {
   }
 
   #finalizeReady() {
+    if (this.isReady || this._finalizingReady) {
+      return;
+    }
+
     if (this._readyTimeout) {
       clearTimeout(this._readyTimeout);
       this._readyTimeout = null;
     }
 
+    const token = this._readyToken;
+    this._finalizingReady = true;
+
+    const completeReady = () => {
+      if (this.isDestroying || this.isDestroyed) {
+        this._finalizingReady = false;
+        return;
+      }
+
+      if (token !== this._readyToken) {
+        this._finalizingReady = false;
+        return;
+      }
+
+      this.isReady = true;
+      this._finalizingReady = false;
+      this._scheduleScrollbarRefresh();
+    };
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (this.isDestroying || this.isDestroyed) {
+            this._finalizingReady = false;
             return;
           }
-          this.isReady = true;
-          this._scheduleScrollbarRefresh();
+          this.#waitForImages().then(completeReady);
         });
       });
     });
@@ -706,6 +735,39 @@ export default class OrbatTree extends Component {
 
     parts.pop();
     return parts.join(".");
+  }
+
+  #waitForImages() {
+    const rootElement = this._rootElement;
+    if (!rootElement || typeof document === "undefined") {
+      return Promise.resolve();
+    }
+
+    const images = Array.from(rootElement.querySelectorAll("img"));
+    if (!images.length) {
+      return Promise.resolve();
+    }
+
+    const pending = images.filter((img) => !img.complete);
+    if (!pending.length) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      let remaining = pending.length;
+
+      const done = () => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          resolve();
+        }
+      };
+
+      pending.forEach((img) => {
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+    });
   }
 
   _scheduleScrollbarRefresh() {

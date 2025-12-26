@@ -2,6 +2,7 @@ import Component from "@glimmer/component";
 import { action } from "@ember/object";
 import { scheduleOnce } from "@ember/runloop";
 import { registerDestructor } from "@ember/destroyable";
+import { htmlSafe } from "@ember/template";
 
 export default class OrbatBranch extends Component {
   constructor() {
@@ -31,6 +32,30 @@ export default class OrbatBranch extends Component {
 
   get hasSingleChild() {
     return this.hasChildren && !this.hasMultipleChildren;
+  }
+
+  get branchStyle() {
+    const declarations = [];
+    const marginLeft = this.#normalizeSpacing(
+      this.node.marginLeft ?? this.node.margin_left
+    );
+    const marginRight = this.#normalizeSpacing(
+      this.node.marginRight ?? this.node.margin_right
+    );
+
+    if (marginLeft) {
+      declarations.push(`margin-left: ${marginLeft}`);
+    }
+
+    if (marginRight) {
+      declarations.push(`margin-right: ${marginRight}`);
+    }
+
+    if (!declarations.length) {
+      return null;
+    }
+
+    return htmlSafe(`${declarations.join("; ")};`);
   }
 
   @action
@@ -79,13 +104,17 @@ export default class OrbatBranch extends Component {
       element.parentElement,
       styles
     );
+    const leftMarginValue = this.#parsePixelValue(styles.marginLeft);
+    const rightMarginValue = this.#parsePixelValue(styles.marginRight);
+    const leftMargin = Number.isFinite(leftMarginValue) ? leftMarginValue : 0;
+    const rightMargin = Number.isFinite(rightMarginValue) ? rightMarginValue : 0;
     const leftGap =
       prevSibling && this.#isSameRow(prevSibling, element)
-        ? horizontalGap / 2
+        ? horizontalGap / 2 + leftMargin
         : 0;
     const rightGap =
       nextSibling && this.#isSameRow(nextSibling, element)
-        ? horizontalGap / 2
+        ? horizontalGap / 2 + rightMargin
         : 0;
 
     const width = element.offsetWidth;
@@ -159,6 +188,27 @@ export default class OrbatBranch extends Component {
 
     const parsed = parseFloat(value);
     return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
+  #normalizeSpacing(value) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === "number") {
+      return `${value}px`;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return null;
+    }
+
+    if (/^-?\d+(\.\d+)?$/.test(raw)) {
+      return `${raw}px`;
+    }
+
+    return raw;
   }
 
   #isSameRow(sibling, element) {

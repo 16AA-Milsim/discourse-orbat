@@ -26,6 +26,18 @@ en:
         heading: "Live Preview"
         unavailable: "Preview will appear below after you generate it."
         loading: "Generating preview…"
+      validation:
+        heading: "Validation helpers"
+        help: "These checks run in the editor and do not verify group existence."
+        missing_nodes: "Top-level \"nodes\" array is missing or not a list."
+        duplicate_code: "Duplicate node code: %{code}."
+        duplicate_id: "Duplicate node id: %{id}."
+        missing_label: "Node is missing a label (code: %{code})."
+        empty_select: "Node \"%{label}\" has empty values in select.any/select.all."
+        invalid_sort: "Node \"%{label}\" has unsupported select.sort value: %{value}."
+        empty_root_section: "rootSections entry is missing prefixes/codes."
+        rank_priority_duplicates: "rankPriority contains duplicates: %{values}."
+        unnamed_node: "Unnamed node"
       notices:
         saved: "ORBAT configuration saved."
         restored: "Default ORBAT configuration restored."

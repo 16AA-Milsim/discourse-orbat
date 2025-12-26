@@ -513,16 +513,36 @@
 }
 
 .orbat-node__user-link {
+  position: relative;
+  display: inline-block;
   font-weight: 600;
   color: inherit;
   text-decoration: none;
+}
 
-  &:hover,
-  &:focus,
-  &:visited {
-    color: inherit;
-    text-decoration: none;
-  }
+.orbat-node__user-link:visited,
+.orbat-node__user-link:hover,
+.orbat-node__user-link:focus,
+.orbat-node__user-link:focus-visible,
+.orbat-node__user-link:active {
+  color: inherit;
+}
+
+.orbat-node__user-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 140ms ease;
+}
+
+.orbat-node__user-link:hover::after {
+  transform: scaleX(1);
 }
 
 .orbat-node__placeholder {
@@ -708,4 +728,26 @@ body.orbat-view .powered-by-discourse {
   font-family: var(--d-font-family--monospace);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.orbat-admin__validation {
+  margin: 0;
+}
+
+.orbat-admin__validation-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.orbat-admin__validation-help {
+  margin-bottom: 8px;
+  color: var(--primary-700);
+}
+
+.orbat-admin__validation-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
