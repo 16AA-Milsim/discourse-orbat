@@ -19,11 +19,18 @@ const GAP_TOKEN_MAP = {
  */
 export default class OrbatTree extends Component {
   @tracked isReady = false;
+  @tracked scrollbarContentWidth = null;
+  @tracked scrollbarViewportWidth = null;
   _readyScheduled = false;
   _readyCount = 0;
   _expectedNodes = 0;
   _rootElement = null;
   _readyTimeout = null;
+  _canvasElement = null;
+  _scrollbarElement = null;
+  _refreshFrame = null;
+  _syncingFromCanvas = false;
+  _syncingFromScrollbar = false;
 
   get tree() {
     return this.args.tree || {};
@@ -77,6 +84,26 @@ export default class OrbatTree extends Component {
     return this.errors.length > 0;
   }
 
+  get showStickyScrollbar() {
+    if (!this.isReady) {
+      return false;
+    }
+
+    if (!this.scrollbarContentWidth || !this.scrollbarViewportWidth) {
+      return false;
+    }
+
+    return this.scrollbarContentWidth > this.scrollbarViewportWidth + 1;
+  }
+
+  get scrollbarContentStyle() {
+    if (!this.scrollbarContentWidth) {
+      return null;
+    }
+
+    return htmlSafe(`width: ${this.scrollbarContentWidth}px;`);
+  }
+
   get uniqueMemberCount() {
     if (!this.nodes.length) {
       return 0;
@@ -107,7 +134,7 @@ export default class OrbatTree extends Component {
   }
 
   get showMemberCount() {
-    return this.uniqueMemberCount > 0;
+    return this.isReady && this.uniqueMemberCount > 0;
   }
 
   resolveImage(filename) {
@@ -443,6 +470,8 @@ export default class OrbatTree extends Component {
   registerRoot(element) {
     this._rootElement = element;
     this.isReady = false;
+    this.scrollbarContentWidth = null;
+    this.scrollbarViewportWidth = null;
     this._readyCount = 0;
     this._expectedNodes = this.#expectedNodeCount();
     this.#scheduleReady();
@@ -451,6 +480,8 @@ export default class OrbatTree extends Component {
   @action
   resetReady() {
     this.isReady = false;
+    this.scrollbarContentWidth = null;
+    this.scrollbarViewportWidth = null;
     this._readyCount = 0;
     this._expectedNodes = this.#expectedNodeCount();
     this.#scheduleReady();
@@ -536,6 +567,7 @@ export default class OrbatTree extends Component {
             return;
           }
           this.isReady = true;
+          this._scheduleScrollbarRefresh();
         });
       });
     });
@@ -559,11 +591,99 @@ export default class OrbatTree extends Component {
     }
   }
 
+  @action
+  registerCanvas(element) {
+    this._canvasElement = element;
+    this._scheduleScrollbarRefresh();
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", this.handleWindowResize);
+    }
+  }
+
+  @action
+  unregisterCanvas(element) {
+    if (this._canvasElement === element) {
+      this._canvasElement = null;
+    }
+    if (typeof window !== "undefined") {
+      window.removeEventListener("resize", this.handleWindowResize);
+    }
+  }
+
+  @action
+  registerScrollbar(element) {
+    this._scrollbarElement = element;
+    this._syncScrollbarPosition();
+  }
+
+  @action
+  unregisterScrollbar(element) {
+    if (this._scrollbarElement === element) {
+      this._scrollbarElement = null;
+    }
+  }
+
+  @action
+  refreshScrollbar(element) {
+    if (element) {
+      this._canvasElement = element;
+    }
+    this._scheduleScrollbarRefresh();
+  }
+
+  @action
+  handleWindowResize() {
+    this._scheduleScrollbarRefresh();
+  }
+
+  @action
+  handleCanvasScroll(event) {
+    if (this._syncingFromScrollbar) {
+      return;
+    }
+
+    const target = event?.target;
+    if (!target || !this._scrollbarElement) {
+      return;
+    }
+
+    this._syncingFromCanvas = true;
+    this._scrollbarElement.scrollLeft = target.scrollLeft;
+    requestAnimationFrame(() => {
+      this._syncingFromCanvas = false;
+    });
+  }
+
+  @action
+  handleScrollbarScroll(event) {
+    if (this._syncingFromCanvas) {
+      return;
+    }
+
+    const target = event?.target;
+    if (!target || !this._canvasElement) {
+      return;
+    }
+
+    this._syncingFromScrollbar = true;
+    this._canvasElement.scrollLeft = target.scrollLeft;
+    requestAnimationFrame(() => {
+      this._syncingFromScrollbar = false;
+    });
+  }
+
   willDestroy() {
     super.willDestroy?.(...arguments);
     if (this._readyTimeout) {
       clearTimeout(this._readyTimeout);
       this._readyTimeout = null;
+    }
+    if (this._refreshFrame && typeof window !== "undefined") {
+      window.cancelAnimationFrame?.(this._refreshFrame);
+      this._refreshFrame = null;
+    }
+    if (typeof window !== "undefined") {
+      window.removeEventListener("resize", this.handleWindowResize);
     }
   }
 
@@ -586,5 +706,49 @@ export default class OrbatTree extends Component {
 
     parts.pop();
     return parts.join(".");
+  }
+
+  _scheduleScrollbarRefresh() {
+    if (!this._canvasElement || typeof window === "undefined") {
+      return;
+    }
+
+    if (this._refreshFrame) {
+      window.cancelAnimationFrame?.(this._refreshFrame);
+    }
+
+    this._refreshFrame = window.requestAnimationFrame?.(() => {
+      this._refreshFrame = null;
+      this._refreshScrollbar();
+    });
+
+    if (!this._refreshFrame) {
+      this._refreshScrollbar();
+    }
+  }
+
+  _refreshScrollbar() {
+    const canvas = this._canvasElement;
+    if (!canvas) {
+      this.scrollbarContentWidth = null;
+      this.scrollbarViewportWidth = null;
+      return;
+    }
+
+    const contentWidth = canvas.scrollWidth || 0;
+    const viewportWidth = canvas.clientWidth || 0;
+
+    this.scrollbarContentWidth = contentWidth || null;
+    this.scrollbarViewportWidth = viewportWidth || null;
+
+    this._syncScrollbarPosition();
+  }
+
+  _syncScrollbarPosition() {
+    if (!this._scrollbarElement || !this._canvasElement) {
+      return;
+    }
+
+    this._scrollbarElement.scrollLeft = this._canvasElement.scrollLeft;
   }
 }

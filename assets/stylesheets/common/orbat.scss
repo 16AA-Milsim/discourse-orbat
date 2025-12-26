@@ -39,6 +39,12 @@
   overflow-x: auto;
   align-self: stretch;
   position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.orbat-page__canvas::-webkit-scrollbar {
+  height: 0;
 }
 
 .orbat-page__canvas-inner {
@@ -53,7 +59,7 @@
 .orbat-page__member-count {
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: var(--orbat-tree-bottom-padding, 0);
   padding: 0 6px 6px;
   pointer-events: none;
   z-index: 1;
@@ -68,6 +74,20 @@
   font-weight: 600;
   letter-spacing: 0.2px;
   pointer-events: auto;
+}
+
+.orbat-page__sticky-scrollbar {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  height: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 2;
+}
+
+.orbat-page__sticky-scrollbar-content {
+  height: 1px;
 }
 
 .orbat-page__masthead {
@@ -136,6 +156,8 @@
 .orbat-tree__container {
   position: relative;
   min-height: 200px;
+  --orbat-tree-bottom-padding: 16px;
+  padding-bottom: var(--orbat-tree-bottom-padding);
 }
 
 .orbat-tree__container--loading {

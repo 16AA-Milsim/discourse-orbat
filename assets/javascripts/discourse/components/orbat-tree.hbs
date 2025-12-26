@@ -1,6 +1,12 @@
 {{! template-lint-disable require-strict-mode}}
 <div class="orbat-page">
-  <div class="orbat-page__canvas">
+  <div
+    class="orbat-page__canvas"
+    {{did-insert this.registerCanvas}}
+    {{did-update this.refreshScrollbar this.tree.generatedAt this.isReady}}
+    {{will-destroy this.unregisterCanvas}}
+    {{on "scroll" this.handleCanvasScroll}}
+  >
     <div class="orbat-page__canvas-inner">
       {{#if this.hasErrors}}
         <section class="orbat-alert">
@@ -128,4 +134,17 @@
       </div>
     </div>
   </div>
+  {{#if this.showStickyScrollbar}}
+    <div
+      class="orbat-page__sticky-scrollbar"
+      {{did-insert this.registerScrollbar}}
+      {{will-destroy this.unregisterScrollbar}}
+      {{on "scroll" this.handleScrollbarScroll}}
+    >
+      <div
+        class="orbat-page__sticky-scrollbar-content"
+        style={{this.scrollbarContentStyle}}
+      ></div>
+    </div>
+  {{/if}}
 </div>
