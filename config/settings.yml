@@ -5,6 +5,16 @@ plugins:
   orbat_admin_only:
     client: true
     default: false
+  orbat_cache_ttl:
+    default: 60
+    type: integer
+  orbat_hide_hidden_groups:
+    default: true
+    type: bool
+  orbat_exclusive_groups:
+    client: true
+    type: list
+    default: "Reserves|Force_Protection"
   orbat_json:
     client: true
     type: text

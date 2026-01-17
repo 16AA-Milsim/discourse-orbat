@@ -58,8 +58,26 @@ export default class OrbatTree extends Component {
     return this.resolveImage("16th_air_assault.svg");
   }
 
+  get mastheadLogoIsSvg() {
+    return this.#isSvgAsset(this.mastheadLogo);
+  }
+
+  get mastheadLogoShouldTint() {
+    return !this.#isTintExcluded(this.mastheadLogo, this.tintExclusionList);
+  }
+
+  get mastheadMaskStyle() {
+    return this.#maskStyle(this.mastheadLogo, "--orbat-masthead-mask");
+  }
+
   get display() {
     return this.tree.display || {};
+  }
+
+  get tintExclusionList() {
+    return this.#normalizeExclusionList(
+      this.display.tintExcludeSvgs ?? this.display.tint_exclude_svgs
+    );
   }
 
   get rootStyle() {
@@ -735,6 +753,77 @@ export default class OrbatTree extends Component {
 
     parts.pop();
     return parts.join(".");
+  }
+
+  #maskStyle(source, variableName) {
+    if (!source) {
+      return null;
+    }
+
+    return htmlSafe(`${variableName}: url("${source}");`);
+  }
+
+  #isSvgAsset(value) {
+    if (!value) {
+      return false;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return false;
+    }
+
+    return /\.svg(\?.*)?(#.*)?$/i.test(raw);
+  }
+
+  #normalizeExclusionList(value) {
+    if (value === undefined) {
+      return ["16th_air_assault.svg"];
+    }
+
+    if (value === null) {
+      return [];
+    }
+
+    let list = [];
+
+    if (Array.isArray(value)) {
+      list = value;
+    } else if (typeof value === "string") {
+      list = value.split(/[,\n|]/);
+    } else {
+      return [];
+    }
+
+    return list
+      .map((entry) => `${entry}`.trim())
+      .filter(Boolean)
+      .map((entry) => {
+        const [path] = entry.split(/[?#]/, 1);
+        const filename = path.split("/").pop();
+        return filename ? filename.toLowerCase() : "";
+      })
+      .filter(Boolean);
+  }
+
+  #isTintExcluded(value, exclusions) {
+    if (!value) {
+      return false;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return false;
+    }
+
+    const [path] = raw.split(/[?#]/, 1);
+    const filename = path.split("/").pop()?.toLowerCase();
+    if (!filename) {
+      return false;
+    }
+
+    const list = Array.isArray(exclusions) ? exclusions : [];
+    return list.includes(filename);
   }
 
   #waitForImages() {

@@ -38,6 +38,29 @@
           {{on "change" this.updateOrbatAdminOnly}}
         />
       </label>
+      <div class="orbat-setting orbat-setting--field">
+        <div class="orbat-setting__label">
+          {{i18n "orbat_admin.settings.exclusive_groups_label"}}
+        </div>
+        <div class="orbat-setting__field">
+          <Input
+            @type="text"
+            @value={{this.orbatExclusiveGroups}}
+            @placeholder={{i18n "orbat_admin.settings.exclusive_groups_placeholder"}}
+            @disabled={{this.updatingExclusiveGroups}}
+            {{on "input" this.updateExclusiveGroupsInput}}
+          />
+          <DButton
+            @label="orbat_admin.settings.exclusive_groups_save"
+            @action={{this.saveExclusiveGroups}}
+            @disabled={{this.exclusiveGroupsSaveDisabled}}
+            class="btn-default btn-small"
+          />
+        </div>
+        <div class="orbat-setting__help">
+          {{i18n "orbat_admin.settings.exclusive_groups_help"}}
+        </div>
+      </div>
     </div>
 
     <div class="orbat-admin__layout">
@@ -124,6 +147,12 @@
                       <code>type</code>, <code>columns</code>, <code>gap</code>),
                       <code>showEmpty</code>, and <code>emptyLabel</code>.
                     </dd>
+                    <dt><code>tintExcludeSvgs</code></dt>
+                    <dd>
+                      Array of SVG filenames to skip tinting. Defaults to
+                      <code>["16th_air_assault.svg"]</code>. Set to
+                      <code>[]</code> to allow tinting every SVG.
+                    </dd>
                   </dl>
                   <p>
                     Note: <code>display.gap</code>, <code>display.rootColumns</code>,
@@ -150,6 +179,13 @@
                       <code>badge</code> and <code>icon</code>: image paths or
                       URLs. Relative paths resolve to this plugin's
                       <code>public/images</code> directory.
+                    </li>
+                    <li>
+                      <code>badgeTint</code>/<code>iconTint</code> (true/false)
+                      apply the theme palette to SVG assets; set to
+                      <code>false</code> to keep original SVG colors.
+                      <code>badgeFilter</code>/<code>iconFilter</code> control
+                      whether PNG filters/opacity are applied.
                     </li>
                     <li>
                       <code>badgeWidth</code>, <code>labelFontSize</code>,
@@ -366,7 +402,7 @@
                 <field.Code @lang="javascript" @height={{420}} />
               </form.Field>
 
-              {{#if this.validationWarnings.length}}
+              {{#if this.allWarnings.length}}
                 <div class="alert alert-warning orbat-admin__validation">
                   <div class="orbat-admin__validation-title">
                     {{i18n "orbat_admin.validation.heading"}}
@@ -375,7 +411,7 @@
                     {{i18n "orbat_admin.validation.help"}}
                   </div>
                   <ul class="orbat-admin__validation-list">
-                    {{#each this.validationWarnings as |warning|}}
+                    {{#each this.allWarnings as |warning|}}
                       <li>{{warning}}</li>
                     {{/each}}
                   </ul>
@@ -417,8 +453,8 @@
         {{#if this.isLoaded}}
           {{#if (eq this.previewState "loading")}}
             <ConditionalLoadingSpinner @size="medium" />
-          {{else if this.tree}}
-            <OrbatTree @tree={{this.tree}} />
+          {{else if this.previewTree}}
+            <OrbatTree @tree={{this.previewTree}} />
           {{else}}
             <p class="orbat-admin__indicator">
               {{i18n "orbat_admin.preview.unavailable"}}

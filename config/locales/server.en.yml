@@ -12,3 +12,6 @@ en:
   site_settings:
     orbat_enabled: "Enable the ORBAT plugin"
     orbat_admin_only: "Restrict the ORBAT page to admins"
+    orbat_cache_ttl: "ORBAT cache TTL (seconds)"
+    orbat_hide_hidden_groups: "Hide staff-only groups from ORBAT"
+    orbat_exclusive_groups: "ORBAT exclusive groups"

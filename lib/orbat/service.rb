@@ -509,7 +509,8 @@ class ::Orbat::Service
   SETTING_DEFAULTS = {
     orbat_cache_ttl: 60,
     orbat_json: DEFAULT_CONFIGURATION,
-    orbat_hide_hidden_groups: true
+    orbat_hide_hidden_groups: true,
+    orbat_exclusive_groups: "Reserves|Force_Protection"
   }.freeze
 
   DEFAULT_DISPLAY = {
@@ -520,7 +521,8 @@ class ::Orbat::Service
     "rootColumns" => nil,
     "gap" => "lg",
     "showAvatars" => false,
-    "emptyLabel" => "-"
+    "emptyLabel" => "-",
+    "tintExcludeSvgs" => ["16th_air_assault.svg"]
   }.freeze
 
   class << self
@@ -593,8 +595,12 @@ class ::Orbat::Service
 
       rank_priority_groups = DEFAULT_RANK_PRIORITY if rank_priority_groups.blank?
 
+      exclusive_groups = normalize_group_list(setting(:orbat_exclusive_groups))
+      exclusive_group_set = exclusive_groups.to_set
+
       group_names = collect_group_names(config.fetch("nodes", []))
       group_names.concat(rank_priority_groups)
+      group_names.concat(exclusive_groups)
       group_names = group_names.compact.uniq
 
       groups =
@@ -620,6 +626,22 @@ class ::Orbat::Service
         user_groups[record.user_id] << name
       end
 
+      exclusive_user_ids = Set.new
+      if exclusive_group_set.present?
+        member_records.each do |record|
+          if exclusive_group_set.include?(record.group.name)
+            exclusive_user_ids << record.user_id
+          end
+        end
+      end
+
+      hidden_group_names = Set.new
+      if setting(:orbat_hide_hidden_groups)
+        groups.each_value do |group|
+          hidden_group_names << group.name if group_hidden?(group)
+        end
+      end
+
       display =
         DEFAULT_DISPLAY.merge(config.fetch("display", {})).merge(
           "emptyLabel" => config.dig("display", "emptyLabel").presence || default_empty_label,
@@ -634,6 +656,10 @@ class ::Orbat::Service
         join_dates: build_join_date_index(member_records),
         display: display,
         hide_hidden_groups: setting(:orbat_hide_hidden_groups) ? true : false,
+        exclusive_groups: exclusive_groups,
+        exclusive_group_set: exclusive_group_set,
+        exclusive_user_ids: exclusive_user_ids,
+        hidden_group_names: hidden_group_names,
         errors: [],
         missing_groups: Set.new
       }
@@ -670,9 +696,9 @@ class ::Orbat::Service
       names = []
       nodes.each do |node|
         select = node["select"] || {}
-        names.concat(Array(select["any"]))
-        names.concat(Array(select["all"]))
-        names.concat(Array(select["not"]))
+        names.concat(normalize_group_list(select["any"]))
+        names.concat(normalize_group_list(select["all"]))
+        names.concat(normalize_group_list(select["not"]))
         names.concat(collect_group_names(node["children"] || []))
       end
       names
@@ -710,7 +736,11 @@ class ::Orbat::Service
         "theme" => definition["theme"] || "neutral",
         "badge" => definition["badge"],
         "badgeWidth" => definition["badgeWidth"] || definition["badge_width"],
+        "badgeTint" => definition.fetch("badgeTint", definition["badge_tint"]),
+        "badgeFilter" => definition.fetch("badgeFilter", definition["badge_filter"]),
         "icon" => definition["icon"],
+        "iconTint" => definition.fetch("iconTint", definition["icon_tint"]),
+        "iconFilter" => definition.fetch("iconFilter", definition["icon_filter"]),
         "labelFontSize" => definition["labelFontSize"] || definition["label_font_size"],
         "marginLeft" => definition["marginLeft"] || definition["margin_left"],
         "marginRight" => definition["marginRight"] || definition["margin_right"],
@@ -768,15 +798,19 @@ class ::Orbat::Service
     def resolve(select, context)
       include_hidden = select["includeHidden"] ? true : false
 
+      any_groups = normalize_group_list(select["any"])
+      all_groups = normalize_group_list(select["all"])
+      not_groups = normalize_group_list(select["not"])
+
       any =
-        Array(select["any"])
+        any_groups
           .flat_map do |group_name|
             members_for(group_name, context, include_hidden: include_hidden)
           end
           .map(&:user)
 
       all =
-        Array(select["all"])
+        all_groups
           .map do |group_name|
             members_for(group_name, context, include_hidden: include_hidden).map(&:user)
           end
@@ -784,14 +818,25 @@ class ::Orbat::Service
             accumulator ? accumulator & collection : collection
           end || []
 
-      base = select["all"] ? all : any
+      base = all_groups.any? ? all : any
 
       exclusions =
-        Array(select["not"]).flat_map do |group_name|
+        not_groups.flat_map do |group_name|
           members_for(group_name, context, include_hidden: true).map(&:user_id)
         end
 
-      base.uniq { |user| user.id }.reject { |user| exclusions.include?(user.id) }
+      resolved = base.uniq { |user| user.id }.reject { |user| exclusions.include?(user.id) }
+
+      exclusive_user_ids = context[:exclusive_user_ids]
+      return resolved if exclusive_user_ids.blank?
+
+      select_groups = (any_groups + all_groups).uniq
+      exclusive_group_set = context[:exclusive_group_set] || Set.new
+      includes_exclusive = select_groups.any? { |name| exclusive_group_set.include?(name) }
+
+      return resolved if includes_exclusive
+
+      resolved.reject { |user| exclusive_user_ids.include?(user.id) }
     end
 
     def members_for(group_name, context, include_hidden:)
@@ -819,6 +864,7 @@ class ::Orbat::Service
       return if context[:missing_groups].include?(group_name)
 
       context[:missing_groups] << group_name
+      context[:errors] << I18n.t("orbat.errors.missing_group", group: group_name)
     end
 
     def register_hidden_group(group_name, context)
@@ -881,11 +927,10 @@ class ::Orbat::Service
 
       groups =
         if select["all"].present?
-          Array(select["all"])
+          normalize_group_list(select["all"])
         else
-          Array(select["any"])
+          normalize_group_list(select["any"])
         end
-      groups = groups.map { |name| name.to_s.strip }.reject(&:blank?)
 
       index = {}
       groups.each_with_index do |name, idx|
@@ -912,6 +957,11 @@ class ::Orbat::Service
           ::DiscourseRankOnNames.prefix_for_user(user)
         end
 
+      groups = context[:user_groups][user.id] || []
+      if context[:hidden_group_names].present?
+        groups = groups.reject { |name| context[:hidden_group_names].include?(name) }
+      end
+
       {
         "id" => user.id,
         "username" => user.username,
@@ -923,8 +973,21 @@ class ::Orbat::Service
         "summaryPath" => summary_path,
         "profilePath" => profile_path,
         "rankPrefix" => rank_prefix,
-        "groups" => context[:user_groups][user.id] || []
+        "groups" => groups
       }
+    end
+
+    def normalize_group_list(value)
+      return [] if value.blank?
+
+      list =
+        if value.is_a?(Array)
+          value
+        else
+          value.to_s.split(/[|\n,]/)
+        end
+
+      list.map { |name| name.to_s.strip }.reject(&:blank?)
     end
 
     def normalize_banner(banner)

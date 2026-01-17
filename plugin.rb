@@ -23,12 +23,21 @@ after_initialize do
 
   on(:group_user_created)  { ::Orbat::Service.clear_cache }
   on(:group_user_destroyed){ ::Orbat::Service.clear_cache }
+  on(:user_added_to_group) { ::Orbat::Service.clear_cache }
+  on(:user_removed_from_group) { ::Orbat::Service.clear_cache }
+  on(:user_created) { ::Orbat::Service.clear_cache }
+  on(:user_updated) { ::Orbat::Service.clear_cache }
+  on(:user_destroyed) { ::Orbat::Service.clear_cache }
+  on(:group_created) { ::Orbat::Service.clear_cache }
+  on(:group_updated) { ::Orbat::Service.clear_cache }
+  on(:group_destroyed) { ::Orbat::Service.clear_cache }
 
   on(:site_setting_changed) do |name, _old_value, _new_value|
     if %i[
       orbat_json
       orbat_cache_ttl
       orbat_hide_hidden_groups
+      orbat_exclusive_groups
       orbat_enabled
       orbat_admin_only
     ].include?(name.to_sym)
@@ -46,7 +55,8 @@ after_initialize do
       end
 
       def data
-        render_json_dump(::Orbat::Service.cached_tree)
+        payload = ::Orbat::Service.cached_tree
+        render_json_dump(payload.merge("errors" => []))
       end
 
       private
@@ -65,9 +75,10 @@ after_initialize do
       requires_plugin ::Orbat::PLUGIN_NAME
 
       def show
+        configuration = SiteSetting.orbat_json
         render_json_dump(
-          configuration: SiteSetting.orbat_json,
-          tree: ::Orbat::Service.cached_tree,
+          configuration: configuration,
+          tree: ::Orbat::Service.preview(configuration),
         )
       end
 

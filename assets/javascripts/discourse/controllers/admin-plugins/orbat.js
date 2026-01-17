@@ -21,12 +21,15 @@ export default class AdminPluginsOrbatController extends Controller {
   @tracked isLoaded = false;
   @tracked orbatEnabled = false;
   @tracked orbatAdminOnly = false;
+  @tracked orbatExclusiveGroups = "";
   @tracked updatingEnabled = false;
   @tracked updatingAdminOnly = false;
+  @tracked updatingExclusiveGroups = false;
   @tracked validationWarnings = [];
 
   formApi = null;
   _pendingFormSync = false;
+  _exclusiveGroupsSaved = "";
 
   setup(model) {
     if (model?.disallow) {
@@ -39,6 +42,14 @@ export default class AdminPluginsOrbatController extends Controller {
     this.isLoaded = false;
     this.orbatEnabled = !!this.siteSettings?.orbat_enabled;
     this.orbatAdminOnly = !!this.siteSettings?.orbat_admin_only;
+    const exclusiveGroupsSetting = this.#normalizeExclusiveGroupsSetting(
+      this.siteSettings?.orbat_exclusive_groups
+    );
+    const exclusiveGroupsDisplay = this.#formatExclusiveGroupsDisplay(
+      exclusiveGroupsSetting
+    );
+    this.orbatExclusiveGroups = exclusiveGroupsDisplay;
+    this._exclusiveGroupsSaved = exclusiveGroupsSetting;
 
     let configuration = this.#prepareConfiguration(model?.configuration);
 
@@ -55,14 +66,53 @@ export default class AdminPluginsOrbatController extends Controller {
     this.isLoaded = true;
     this.#updateValidationWarnings(configuration);
     this._queueFormSync();
+    this.#loadInitialPreview(configuration, this.tree);
   }
 
   get previewErrors() {
     return this.tree?.errors || [];
   }
 
+  get allWarnings() {
+    const warnings = new Set();
+    (this.validationWarnings || []).forEach((warning) => {
+      if (warning) {
+        warnings.add(warning);
+      }
+    });
+    (this.previewErrors || []).forEach((warning) => {
+      if (warning) {
+        warnings.add(warning);
+      }
+    });
+    return Array.from(warnings);
+  }
+
+  get previewTree() {
+    if (!this.tree) {
+      return null;
+    }
+
+    if (!this.tree.errors || this.tree.errors.length === 0) {
+      return this.tree;
+    }
+
+    return {
+      ...this.tree,
+      errors: [],
+    };
+  }
+
   get adminOnlyDisabled() {
     return !this.orbatEnabled || this.updatingAdminOnly;
+  }
+
+  get exclusiveGroupsSaveDisabled() {
+    return (
+      this.updatingExclusiveGroups ||
+      this.#normalizeExclusiveGroupsSetting(this.orbatExclusiveGroups) ===
+        this._exclusiveGroupsSaved
+    );
   }
 
   @action
@@ -184,6 +234,44 @@ export default class AdminPluginsOrbatController extends Controller {
     }
   }
 
+
+  @action
+  updateExclusiveGroupsInput(event) {
+    this.orbatExclusiveGroups = event?.target?.value ?? "";
+  }
+
+  @action
+  async saveExclusiveGroups(event) {
+    event?.preventDefault();
+    if (this.exclusiveGroupsSaveDisabled) {
+      return;
+    }
+
+    this.updatingExclusiveGroups = true;
+    const normalizedSetting = this.#normalizeExclusiveGroupsSetting(
+      this.orbatExclusiveGroups
+    );
+    const normalizedDisplay = this.#formatExclusiveGroupsDisplay(
+      this.orbatExclusiveGroups
+    );
+
+    try {
+      await this.#updateTextSetting(
+        "orbat_exclusive_groups",
+        normalizedSetting
+      );
+      this.orbatExclusiveGroups = normalizedDisplay;
+      this._exclusiveGroupsSaved = normalizedSetting;
+      if (this.siteSettings) {
+        this.siteSettings.orbat_exclusive_groups = normalizedSetting;
+      }
+    } catch (error) {
+      popupAjaxError(error);
+    } finally {
+      this.updatingExclusiveGroups = false;
+    }
+  }
+
   @action
   async generatePreview(event) {
     event?.preventDefault();
@@ -197,23 +285,10 @@ export default class AdminPluginsOrbatController extends Controller {
       return;
     }
 
-    this.previewState = "loading";
-    this.notice = null;
-
-    try {
-      this.tree = await ajax("/admin/plugins/orbat/preview", {
-        type: "POST",
-        data: { configuration },
-      });
-    } catch (error) {
-      this.previewState = "error";
-      popupAjaxError(error);
-      return;
-    } finally {
-      if (this.previewState === "loading") {
-        this.previewState = "idle";
-      }
-    }
+    await this.#fetchPreview(configuration, {
+      setPreviewState: true,
+      notifyOnError: true,
+    });
   }
 
   @action
@@ -289,6 +364,60 @@ export default class AdminPluginsOrbatController extends Controller {
     });
   }
 
+  async #updateTextSetting(setting, value) {
+    await ajax(`/admin/site_settings/${setting}`, {
+      type: "PUT",
+      data: {
+        [setting]: value,
+      },
+    });
+  }
+
+  async #loadInitialPreview(configuration, existingTree) {
+    const trimmed = configuration?.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    if (existingTree?.errors?.length) {
+      return;
+    }
+
+    await this.#fetchPreview(configuration, {
+      setPreviewState: false,
+      notifyOnError: false,
+    });
+  }
+
+  async #fetchPreview(
+    configuration,
+    { setPreviewState = false, notifyOnError = true } = {}
+  ) {
+    if (setPreviewState) {
+      this.previewState = "loading";
+      this.notice = null;
+    }
+
+    try {
+      this.tree = await ajax("/admin/plugins/orbat/preview", {
+        type: "POST",
+        data: { configuration },
+      });
+    } catch (error) {
+      if (setPreviewState) {
+        this.previewState = "error";
+      }
+      if (notifyOnError) {
+        popupAjaxError(error);
+      }
+      return;
+    } finally {
+      if (setPreviewState && this.previewState === "loading") {
+        this.previewState = "idle";
+      }
+    }
+  }
+
   #prepareConfiguration(raw) {
     if (!raw) {
       return "";
@@ -312,6 +441,32 @@ export default class AdminPluginsOrbatController extends Controller {
     } catch (error) {
       return "";
     }
+  }
+
+  #normalizeExclusiveGroupList(raw) {
+    if (!raw) {
+      return [];
+    }
+
+    let list = [];
+
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (typeof raw === "string") {
+      list = raw.split(/[|\n,]/);
+    } else {
+      return [];
+    }
+
+    return list.map((value) => `${value}`.trim()).filter(Boolean);
+  }
+
+  #normalizeExclusiveGroupsSetting(raw) {
+    return this.#normalizeExclusiveGroupList(raw).join("|");
+  }
+
+  #formatExclusiveGroupsDisplay(raw) {
+    return this.#normalizeExclusiveGroupList(raw).join(", ");
   }
 
   #updateValidationWarnings(raw) {

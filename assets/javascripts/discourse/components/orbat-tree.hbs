@@ -37,13 +37,29 @@
           style={{unless this.isReady "display:none;"}}
         >
         <div class="orbat-tree__masthead orbat-page__masthead">
-          <img
-            class="orbat-page__masthead-logo"
-            src={{this.mastheadLogo}}
-            alt="16 Air Assault Brigade insignia"
-            width="50"
-            height="60"
-          />
+          {{#if (and this.mastheadLogoIsSvg this.mastheadLogoShouldTint)}}
+            <span
+              class="orbat-page__masthead-logo-wrap"
+              style={{this.mastheadMaskStyle}}
+            >
+              <img
+                class="orbat-page__masthead-logo orbat-page__masthead-logo--source"
+                src={{this.mastheadLogo}}
+                alt="16 Air Assault Brigade insignia"
+                width="50"
+                height="60"
+              />
+              <span class="orbat-page__masthead-logo--tint" aria-hidden="true"></span>
+            </span>
+          {{else}}
+            <img
+              class="orbat-page__masthead-logo"
+              src={{this.mastheadLogo}}
+              alt="16 Air Assault Brigade insignia"
+              width="50"
+              height="60"
+            />
+          {{/if}}
           <div class="orbat-page__masthead-text">
             {{#if this.tree.title}}
               <h1 class="orbat-page__title">

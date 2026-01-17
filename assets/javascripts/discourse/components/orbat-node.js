@@ -31,6 +31,12 @@ export default class OrbatNode extends Component {
     return this.args.display || {};
   }
 
+  get tintExclusionList() {
+    return this.#normalizeExclusionList(
+      this.display.tintExcludeSvgs ?? this.display.tint_exclude_svgs
+    );
+  }
+
   get users() {
     return this.node.users || [];
   }
@@ -80,12 +86,94 @@ export default class OrbatNode extends Component {
     return !!this.icon;
   }
 
+  get iconIsSvg() {
+    return this.#isSvgAsset(this.node.icon);
+  }
+
+  get iconTintEnabled() {
+    return this.#normalizeToggle(this.node.iconTint ?? this.node.icon_tint, true);
+  }
+
+  get shouldTintIcon() {
+    return (
+      this.iconIsSvg &&
+      this.iconTintEnabled &&
+      !this.#isTintExcluded(this.node.icon, this.tintExclusionList)
+    );
+  }
+
+  get iconFilterEnabled() {
+    if (this.#isPngAsset(this.node.icon)) {
+      return false;
+    }
+
+    const value = this.node.iconFilter ?? this.node.icon_filter;
+    if (value === undefined || value === null) {
+      return false;
+    }
+
+    return !!value;
+  }
+
+  get iconClass() {
+    const classes = ["orbat-node__icon"];
+    if (this.iconFilterEnabled) {
+      classes.push("orbat-node__icon--filtered");
+    }
+    return classes.join(" ");
+  }
+
+  get iconSourceClass() {
+    return "orbat-node__icon orbat-node__icon--source";
+  }
+
   get badge() {
     return this.resolveIcon(this.node.badge);
   }
 
   get hasBadge() {
     return !!this.badge;
+  }
+
+  get badgeIsSvg() {
+    return this.#isSvgAsset(this.node.badge);
+  }
+
+  get badgeTintEnabled() {
+    return this.#normalizeToggle(this.node.badgeTint ?? this.node.badge_tint, true);
+  }
+
+  get shouldTintBadge() {
+    return (
+      this.badgeIsSvg &&
+      this.badgeTintEnabled &&
+      !this.#isTintExcluded(this.node.badge, this.tintExclusionList)
+    );
+  }
+
+  get badgeFilterEnabled() {
+    if (this.#isPngAsset(this.node.badge)) {
+      return false;
+    }
+
+    const value = this.node.badgeFilter ?? this.node.badge_filter;
+    if (value === undefined || value === null) {
+      return false;
+    }
+
+    return !!value;
+  }
+
+  get badgeClass() {
+    const classes = ["orbat-node__badge"];
+    if (this.badgeFilterEnabled) {
+      classes.push("orbat-node__badge--filtered");
+    }
+    return classes.join(" ");
+  }
+
+  get badgeSourceClass() {
+    return "orbat-node__badge orbat-node__badge--source";
   }
 
   get hideNode() {
@@ -119,10 +207,18 @@ export default class OrbatNode extends Component {
     );
   }
 
+  get badgeMaskStyle() {
+    return this.#maskStyle(this.badge, "--orbat-badge-mask");
+  }
+
   get labelFontSize() {
     const raw = this.node.labelFontSize ?? this.node.label_font_size;
     const size = parseInt(raw, 10);
     return Number.isFinite(size) && size > 0 ? size : null;
+  }
+
+  get iconMaskStyle() {
+    return this.#maskStyle(this.icon, "--orbat-icon-mask");
   }
 
   get labelContainerStyle() {
@@ -575,5 +671,107 @@ export default class OrbatNode extends Component {
     }
 
     return numeric * fontSize;
+  }
+
+  #normalizeToggle(value, defaultValue) {
+    if (value === undefined || value === null) {
+      return defaultValue;
+    }
+
+    if (typeof value === "string") {
+      const normalized = value.toLowerCase().trim();
+      if (normalized === "false" || normalized === "0" || normalized === "no") {
+        return false;
+      }
+      if (normalized === "true" || normalized === "1" || normalized === "yes") {
+        return true;
+      }
+    }
+
+    return !!value;
+  }
+
+  #maskStyle(source, variableName) {
+    if (!source) {
+      return null;
+    }
+
+    return htmlSafe(`${variableName}: url("${source}");`);
+  }
+
+  #isSvgAsset(value) {
+    if (!value) {
+      return false;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return false;
+    }
+
+    return /\.svg(\?.*)?(#.*)?$/i.test(raw);
+  }
+
+  #isPngAsset(value) {
+    if (!value) {
+      return false;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return false;
+    }
+
+    return /\.png(\?.*)?(#.*)?$/i.test(raw);
+  }
+
+  #normalizeExclusionList(value) {
+    if (value === undefined) {
+      return ["16th_air_assault.svg"];
+    }
+
+    if (value === null) {
+      return [];
+    }
+
+    let list = [];
+
+    if (Array.isArray(value)) {
+      list = value;
+    } else if (typeof value === "string") {
+      list = value.split(/[,\n|]/);
+    } else {
+      return [];
+    }
+
+    return list
+      .map((entry) => `${entry}`.trim())
+      .filter(Boolean)
+      .map((entry) => {
+        const [path] = entry.split(/[?#]/, 1);
+        const filename = path.split("/").pop();
+        return filename ? filename.toLowerCase() : "";
+      })
+      .filter(Boolean);
+  }
+
+  #isTintExcluded(value, exclusions) {
+    if (!value) {
+      return false;
+    }
+
+    const raw = `${value}`.trim();
+    if (!raw) {
+      return false;
+    }
+
+    const [path] = raw.split(/[?#]/, 1);
+    const filename = path.split("/").pop()?.toLowerCase();
+    if (!filename) {
+      return false;
+    }
+
+    const list = Array.isArray(exclusions) ? exclusions : [];
+    return list.includes(filename);
   }
 }

@@ -2,28 +2,59 @@
 <div
   class={{this.wrapperClass}}
   data-orbat-code={{@node.code}}
-  data-orbat-level={{this.level}}
+  data-orbat-level={{@node.level}}
 >
   {{#if this.shouldShowHeader}}
     <header
       class={{concat "orbat-node__header" (if this.hasIcon " orbat-node__header--with-icon" "")}}
     >
       {{#if this.hasBadge}}
-        <img
-          class="orbat-node__badge"
-          src={{this.badge}}
-          style={{this.badgeStyle}}
-          alt=""
-          aria-hidden="true"
-        />
+        {{#if this.shouldTintBadge}}
+          <span
+            class="orbat-node__badge-wrap"
+            style={{this.badgeMaskStyle}}
+            aria-hidden="true"
+          >
+            <img
+              class={{this.badgeSourceClass}}
+              src={{this.badge}}
+              style={{this.badgeStyle}}
+              alt=""
+              aria-hidden="true"
+            />
+            <span
+              class="orbat-node__badge--tint"
+              aria-hidden="true"
+            ></span>
+          </span>
+        {{else}}
+          <img
+            class={{this.badgeClass}}
+            src={{this.badge}}
+            style={{this.badgeStyle}}
+            alt=""
+            aria-hidden="true"
+          />
+        {{/if}}
       {{/if}}
       <div class="orbat-node__title">
         {{#if this.hasIcon}}
-          <img
-            class="orbat-node__icon"
-            src={{this.icon}}
-            alt={{@node.label}}
-          />
+          {{#if this.shouldTintIcon}}
+            <span class="orbat-node__icon-wrap" style={{this.iconMaskStyle}}>
+              <img
+                class={{this.iconSourceClass}}
+                src={{this.icon}}
+                alt={{@node.label}}
+              />
+              <span class="orbat-node__icon--tint" aria-hidden="true"></span>
+            </span>
+          {{else}}
+            <img
+              class={{this.iconClass}}
+              src={{this.icon}}
+              alt={{@node.label}}
+            />
+          {{/if}}
         {{/if}}
         <h3
           class="orbat-node__label"

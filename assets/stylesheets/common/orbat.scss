@@ -1,10 +1,127 @@
+/* Light theme palette */
+$orbat-text-light: rgb(58, 58, 58) !default;
+$orbat-muted-light: rgb(58, 58, 58) !default;
+$orbat-accent-light: rgb(58, 58, 58) !default;
+$orbat-connector-light: rgb(148, 148, 148) !default;
+$orbat-card-bg-light: rgb(255, 255, 255) !default;
+$orbat-card-border-light: rgb(58, 58, 58) !default;
+$orbat-card-border-accent-light: rgb(58, 58, 58) !default;
+$orbat-member-count-bg-light: rgba(255, 255, 255, 0.55) !default;
+$orbat-member-count-border-light: rgb(58, 58, 58) !default;
+$orbat-member-count-text-light: rgb(51, 51, 51) !default;
+$orbat-loading-bg-light: rgba(255, 255, 255, 0.88) !default;
+$orbat-user-hover-bg-light: rgba(0, 0, 0, 0.08) !default;
+$orbat-badge-filter-light: grayscale(100) !default;
+$orbat-icon-filter-light: brightness(100%) saturate(1%) invert(100%) sepia(100%) saturate(12%) hue-rotate(175deg) brightness(2%) contrast(8%) !default;
+$orbat-badge-opacity-light: 0.1 !default;
+$orbat-icon-opacity-light: 0.1 !default;
+$orbat-badge-color-light: rgb(37, 37, 37) !default;
+$orbat-icon-color-light: rgb(37, 37, 37) !default;
+$orbat-masthead-color-light: rgb(37, 37, 37) !default;
+$orbat-setting-bg-light: rgb(248, 250, 252) !default;
+$orbat-setting-text-light: rgb(51, 65, 85) !default;
+$orbat-setting-help-light: rgb(71, 85, 105) !default;
+$orbat-guide-bg-light: rgb(248, 250, 252) !default;
+$orbat-guide-border-light: rgb(226, 232, 240) !default;
+$orbat-guide-text-light: rgb(51, 65, 85) !default;
+$orbat-guide-heading-light: rgb(71, 85, 105) !default;
+$orbat-guide-code-bg-light: rgb(241, 245, 249) !default;
+
+/* Dark theme palette */
+$orbat-text-dark: rgb(166, 166, 166) !default;
+$orbat-muted-dark: rgb(166, 166, 166) !default;
+$orbat-accent-dark: rgb(166, 166, 166) !default;
+$orbat-connector-dark: rgb(122, 122, 122) !default;
+$orbat-card-bg-dark: rgb(17, 17, 17) !default;
+$orbat-card-border-dark: rgb(122, 122, 122) !default;
+$orbat-card-border-accent-dark: rgb(126, 126, 132) !default;
+$orbat-member-count-bg-dark: rgb(14, 14, 14) !default;
+$orbat-member-count-border-dark: rgb(14, 14, 14) !default;
+$orbat-member-count-text-dark: rgb(166, 166, 166) !default;
+$orbat-loading-bg-dark: rgba(10, 16, 27, 0.92) !default;
+$orbat-user-hover-bg-dark: rgba(255, 255, 255, 0.12) !default;
+$orbat-badge-filter-dark: none !default;
+$orbat-icon-filter-dark: none !default;
+$orbat-badge-opacity-dark: 1 !default;
+$orbat-icon-opacity-dark: 1 !default;
+$orbat-badge-color-dark: rgb(255, 255, 255) !default;
+$orbat-icon-color-dark: rgb(255, 255, 255) !default;
+$orbat-masthead-color-dark: rgb(255, 255, 255) !default;
+$orbat-setting-bg-dark: rgb(24, 24, 24) !default;
+$orbat-setting-text-dark: rgb(226, 232, 240) !default;
+$orbat-setting-help-dark: rgb(182, 182, 182) !default;
+$orbat-guide-bg-dark: rgb(36, 36, 36) !default;
+$orbat-guide-border-dark: rgb(80, 80, 80) !default;
+$orbat-guide-text-dark: rgb(241, 241, 241) !default;
+$orbat-guide-heading-dark: rgb(185, 185, 185) !default;
+$orbat-guide-code-bg-dark: rgb(59, 59, 59) !default;
+
+:root {
+  --orbat-color-text: #{$orbat-text-light};
+  --orbat-color-muted: #{$orbat-muted-light};
+  --orbat-color-accent: #{$orbat-accent-light};
+  --orbat-connector-color: #{$orbat-connector-light};
+  --orbat-card-bg: #{$orbat-card-bg-light};
+  --orbat-card-border: #{$orbat-card-border-light};
+  --orbat-card-border-accent: #{$orbat-card-border-accent-light};
+  --orbat-member-count-bg: #{$orbat-member-count-bg-light};
+  --orbat-member-count-border: #{$orbat-member-count-border-light};
+  --orbat-member-count-text: #{$orbat-member-count-text-light};
+  --orbat-loading-bg: #{$orbat-loading-bg-light};
+  --orbat-user-hover-bg: #{$orbat-user-hover-bg-light};
+  --orbat-badge-filter: #{$orbat-badge-filter-light};
+  --orbat-icon-filter: #{$orbat-icon-filter-light};
+  --orbat-badge-opacity: #{$orbat-badge-opacity-light};
+  --orbat-icon-opacity: #{$orbat-icon-opacity-light};
+  --orbat-badge-color: #{$orbat-badge-color-light};
+  --orbat-icon-color: #{$orbat-icon-color-light};
+  --orbat-masthead-color: #{$orbat-masthead-color-light};
+  --orbat-setting-bg: #{$orbat-setting-bg-light};
+  --orbat-setting-text: #{$orbat-setting-text-light};
+  --orbat-setting-help: #{$orbat-setting-help-light};
+  --orbat-guide-bg: #{$orbat-guide-bg-light};
+  --orbat-guide-border: #{$orbat-guide-border-light};
+  --orbat-guide-text: #{$orbat-guide-text-light};
+  --orbat-guide-heading: #{$orbat-guide-heading-light};
+  --orbat-guide-code-bg: #{$orbat-guide-code-bg-light};
+}
+
+:root.orbat-color-scheme-dark {
+  --orbat-color-text: #{$orbat-text-dark};
+  --orbat-color-muted: #{$orbat-muted-dark};
+  --orbat-color-accent: #{$orbat-accent-dark};
+  --orbat-connector-color: #{$orbat-connector-dark};
+  --orbat-card-bg: #{$orbat-card-bg-dark};
+  --orbat-card-border: #{$orbat-card-border-dark};
+  --orbat-card-border-accent: #{$orbat-card-border-accent-dark};
+  --orbat-member-count-bg: #{$orbat-member-count-bg-dark};
+  --orbat-member-count-border: #{$orbat-member-count-border-dark};
+  --orbat-member-count-text: #{$orbat-member-count-text-dark};
+  --orbat-loading-bg: #{$orbat-loading-bg-dark};
+  --orbat-user-hover-bg: #{$orbat-user-hover-bg-dark};
+  --orbat-badge-filter: #{$orbat-badge-filter-dark};
+  --orbat-icon-filter: #{$orbat-icon-filter-dark};
+  --orbat-badge-opacity: #{$orbat-badge-opacity-dark};
+  --orbat-icon-opacity: #{$orbat-icon-opacity-dark};
+  --orbat-badge-color: #{$orbat-badge-color-dark};
+  --orbat-icon-color: #{$orbat-icon-color-dark};
+  --orbat-masthead-color: #{$orbat-masthead-color-dark};
+  --orbat-setting-bg: #{$orbat-setting-bg-dark};
+  --orbat-setting-text: #{$orbat-setting-text-dark};
+  --orbat-setting-help: #{$orbat-setting-help-dark};
+  --orbat-guide-bg: #{$orbat-guide-bg-dark};
+  --orbat-guide-border: #{$orbat-guide-border-dark};
+  --orbat-guide-text: #{$orbat-guide-text-dark};
+  --orbat-guide-heading: #{$orbat-guide-heading-dark};
+  --orbat-guide-code-bg: #{$orbat-guide-code-bg-dark};
+}
+
 .orbat-page {
   --orbat-page-footer-space: 0px;
   --orbat-page-footer-space: max(
     0px,
     env(safe-area-inset-bottom, 0px)
   );
-  --orbat-connector-color: var(--primary-400);
   --orbat-connector-width: 2px;
   --orbat-node-min-width: 112px;
   --orbat-node-gap: 20px;
@@ -14,7 +131,7 @@
   );
   width: 100%;
   /* padding: 32px 32px 0; KEEP THIS DISABLED DO NOT TOUCH! */
-  color: var(--primary-800);
+  color: var(--orbat-color-text);
   font-family: "Roboto", var(--font-family), sans-serif;
   display: flex;
   flex-direction: column;
@@ -68,8 +185,9 @@
 .orbat-page__member-count-text {
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgb(0 0 0 / 55%);
-  color: var(--primary-800);
+  background: var(--orbat-member-count-bg);
+  border: 1px solid var(--orbat-member-count-border);
+  color: var(--orbat-member-count-text);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.2px;
@@ -103,6 +221,32 @@
   height: 60px;
 }
 
+.orbat-page__masthead-logo-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.orbat-page__masthead-logo--source {
+  opacity: 0;
+  display: block;
+}
+
+.orbat-page__masthead-logo--tint {
+  position: absolute;
+  inset: 0;
+  background-color: var(--orbat-masthead-color);
+  mask-image: var(--orbat-masthead-mask);
+  -webkit-mask-image: var(--orbat-masthead-mask);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  pointer-events: none;
+}
+
 .orbat-page__masthead-text {
   display: flex;
   flex-direction: column;
@@ -121,16 +265,16 @@
 .orbat-page__subtitle {
   margin: 0;
   font-size: 19px;
-  color: var(--primary-medium);
+  color: var(--orbat-color-muted);
   text-align: center;
 }
 
 .orbat-alert {
   padding: 20px 24px;
   border-radius: 12px;
-  background: var(--danger-low);
-  border: 1px solid var(--danger-medium);
-  color: var(--danger-hover);
+  background: var(--orbat-card-bg);
+  border: 1px solid var(--orbat-card-border);
+  color: var(--orbat-color-text);
 }
 
 .orbat-alert__title {
@@ -176,7 +320,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 16, 27, 0.92);
+  background: var(--orbat-loading-bg);
   pointer-events: none;
 }
 
@@ -210,14 +354,14 @@
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--primary-700);
+  color: var(--orbat-color-accent);
 }
 
 .orbat-tree__section-subtitle,
 .orbat-tree__section-description {
   margin: 0;
   font-size: 16px;
-  color: var(--primary-medium);
+  color: var(--orbat-color-muted);
 }
 
 .orbat-tree__section-empty {
@@ -393,8 +537,8 @@
 }
 
 .orbat-node__card {
-  background: #080808;
-  border: 1px solid var(--primary-300);
+  background: var(--orbat-card-bg);
+  border: 1px solid var(--orbat-card-border);
   border-radius: 8px;
   box-shadow: 0 10px 24px rgb(15 23 42 / 5%);
   padding: 6px 4px;
@@ -412,7 +556,7 @@
 .orbat-node--theme-section .orbat-node__card,
 .orbat-node--theme-support .orbat-node__card,
 .orbat-node--theme-community .orbat-node__card {
-  border-color: var(--primary-400);
+  border-color: var(--orbat-card-border-accent);
 }
 
 .orbat-node__header {
@@ -437,6 +581,45 @@
   margin: 1px 0 1px 0;
 }
 
+.orbat-node__badge-wrap,
+.orbat-node__icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.orbat-node__badge-wrap .orbat-node__badge--source,
+.orbat-node__icon-wrap .orbat-node__icon--source {
+  opacity: 0;
+}
+
+.orbat-node__badge--tint,
+.orbat-node__icon--tint {
+  position: absolute;
+  inset: 0;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  pointer-events: none;
+}
+
+.orbat-node__badge--tint {
+  background-color: var(--orbat-badge-color);
+  mask-image: var(--orbat-badge-mask);
+  -webkit-mask-image: var(--orbat-badge-mask);
+}
+
+.orbat-node__icon--tint {
+  background-color: var(--orbat-icon-color);
+  mask-image: var(--orbat-icon-mask);
+  -webkit-mask-image: var(--orbat-icon-mask);
+}
+
 .orbat-node__badge {
   margin-top: 2px;
   width: var(--orbat-node-badge-width, 40px);
@@ -450,13 +633,23 @@
   object-fit: contain;
 }
 
+.orbat-node__badge--filtered {
+  filter: var(--orbat-badge-filter);
+  opacity: var(--orbat-badge-opacity);
+}
+
+.orbat-node__icon--filtered {
+  filter: var(--orbat-icon-filter);
+  opacity: var(--orbat-icon-opacity);
+}
+
 .orbat-node__label {
   margin: 0;
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.15px;
   text-transform: uppercase;
-  color: var(--primary-800);
+  color: var(--orbat-color-text);
   text-align: center;
   line-height: 1.2;
   display: inline-flex;
@@ -480,7 +673,7 @@
 
 .orbat-node__description {
   margin: 0;
-  color: var(--primary-medium);
+  color: var(--orbat-color-muted);
   font-size: 8px;
 }
 
@@ -515,10 +708,14 @@
 
 .orbat-node__user-link {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
   font-weight: 600;
   color: inherit;
   text-decoration: none;
+  border-radius: 999px;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .orbat-node__user-link:visited,
@@ -529,26 +726,16 @@
   color: inherit;
 }
 
-.orbat-node__user-link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 140ms ease;
-}
-
-.orbat-node__user-link:hover::after {
-  transform: scaleX(1);
+.orbat-node__user-link:hover,
+.orbat-node__user-link:focus,
+.orbat-node__user-link:focus-visible {
+  background-color: var(--orbat-user-hover-bg);
+  box-shadow: 0 0 0 1px var(--orbat-user-hover-bg);
 }
 
 .orbat-node__placeholder {
   padding: 3px;
-  color: var(--primary-medium);
+  color: var(--orbat-color-muted);
   font-size: 7px;
   text-align: center;
 }
@@ -589,7 +776,7 @@ body.orbat-view .powered-by-discourse {
 .orbat-join-date__help {
   margin-top: 4px;
   font-size: 0.875em;
-  color: var(--primary-600);
+  color: var(--orbat-setting-help);
 }
 
 .orbat-admin__settings {
@@ -605,13 +792,44 @@ body.orbat-view .powered-by-discourse {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 4px;
-  background: var(--primary-50);
-  color: var(--primary-700);
+  background: var(--orbat-setting-bg);
+  color: var(--orbat-setting-text);
   font-weight: 600;
 }
 
 .orbat-setting__label {
   line-height: 1.4;
+}
+
+.orbat-setting--field {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+  flex: 1 1 360px;
+}
+
+.orbat-setting__field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+
+  input {
+    min-width: 220px;
+    flex: 1 1 240px;
+  }
+
+  select {
+    min-width: 220px;
+    flex: 1 1 240px;
+  }
+}
+
+.orbat-setting__help {
+  font-size: 0.85em;
+  color: var(--orbat-setting-help);
+  font-weight: 500;
 }
 
 .orbat-admin__layout {
@@ -641,10 +859,10 @@ body.orbat-view .powered-by-discourse {
   width: 100%;
   margin: 0 0 16px;
   padding: 0;
-  border: 1px solid var(--primary-low-mid);
+  border: 1px solid var(--orbat-guide-border);
   border-radius: 8px;
-  background: var(--primary-very-low);
-  color: var(--primary-700);
+  background: var(--orbat-guide-bg);
+  color: var(--orbat-guide-text);
 
   summary {
     cursor: pointer;
@@ -668,7 +886,7 @@ body.orbat-view .powered-by-discourse {
   }
 
   &[open] summary {
-    border-bottom: 1px solid var(--primary-low-mid);
+    border-bottom: 1px solid var(--orbat-guide-border);
 
     &::after {
       content: "▾";
@@ -687,7 +905,7 @@ body.orbat-view .powered-by-discourse {
     margin: 0;
     font-size: 16px;
     font-weight: 700;
-    color: var(--primary-600);
+    color: var(--orbat-guide-heading);
   }
 
   p {
@@ -723,7 +941,7 @@ body.orbat-view .powered-by-discourse {
 .orbat-admin__guide-code {
   margin: 0;
   padding: 12px 16px;
-  background: var(--primary-low);
+  background: var(--orbat-guide-code-bg);
   border-radius: 6px;
   overflow-x: auto;
   font-family: var(--d-font-family--monospace);
@@ -742,7 +960,7 @@ body.orbat-view .powered-by-discourse {
 
 .orbat-admin__validation-help {
   margin-bottom: 8px;
-  color: var(--primary-700);
+  color: var(--orbat-color-muted);
 }
 
 .orbat-admin__validation-list {
