@@ -510,7 +510,8 @@ class ::Orbat::Service
     orbat_cache_ttl: 60,
     orbat_json: DEFAULT_CONFIGURATION,
     orbat_hide_hidden_groups: true,
-    orbat_exclusive_groups: "Reserves|Force_Protection"
+    orbat_exclusive_groups: "Reserves|Force_Protection",
+    orbat_exclusive_groups_passthrough: "REME|RRO|Media|RLC|3LSR|ITC"
   }.freeze
 
   DEFAULT_DISPLAY = {
@@ -597,6 +598,7 @@ class ::Orbat::Service
 
       exclusive_groups = normalize_group_list(setting(:orbat_exclusive_groups))
       exclusive_group_set = exclusive_groups.to_set
+      exclusive_group_passthrough = normalize_group_list(setting(:orbat_exclusive_groups_passthrough))
 
       group_names = collect_group_names(config.fetch("nodes", []))
       group_names.concat(rank_priority_groups)
@@ -658,6 +660,7 @@ class ::Orbat::Service
         hide_hidden_groups: setting(:orbat_hide_hidden_groups) ? true : false,
         exclusive_groups: exclusive_groups,
         exclusive_group_set: exclusive_group_set,
+        exclusive_group_passthrough: exclusive_group_passthrough,
         exclusive_user_ids: exclusive_user_ids,
         hidden_group_names: hidden_group_names,
         errors: [],
@@ -833,8 +836,9 @@ class ::Orbat::Service
       select_groups = (any_groups + all_groups).uniq
       exclusive_group_set = context[:exclusive_group_set] || Set.new
       includes_exclusive = select_groups.any? { |name| exclusive_group_set.include?(name) }
+      includes_passthrough = exclusive_passthrough_target?(select_groups, context)
 
-      return resolved if includes_exclusive
+      return resolved if includes_exclusive || includes_passthrough
 
       resolved.reject { |user| exclusive_user_ids.include?(user.id) }
     end
@@ -873,6 +877,19 @@ class ::Orbat::Service
 
       context[:missing_groups] << key
       context[:errors] << I18n.t("orbat.errors.hidden_group", group: group_name)
+    end
+
+    def exclusive_passthrough_target?(select_groups, context)
+      passthrough =
+        Array(context[:exclusive_group_passthrough]).map { |name| name.to_s.downcase }.reject do |name|
+          name.blank?
+        end
+      return false if passthrough.blank?
+
+      select_groups.any? do |group_name|
+        candidate = group_name.to_s.downcase
+        passthrough.any? { |base| candidate == base || candidate.start_with?("#{base}_") }
+      end
     end
 
     def sort_and_limit(users, select, context)

@@ -22,14 +22,17 @@ export default class AdminPluginsOrbatController extends Controller {
   @tracked orbatEnabled = false;
   @tracked orbatAdminOnly = false;
   @tracked orbatExclusiveGroups = "";
+  @tracked orbatExclusiveGroupsPassthrough = "";
   @tracked updatingEnabled = false;
   @tracked updatingAdminOnly = false;
   @tracked updatingExclusiveGroups = false;
+  @tracked updatingExclusiveGroupsPassthrough = false;
   @tracked validationWarnings = [];
 
   formApi = null;
   _pendingFormSync = false;
   _exclusiveGroupsSaved = "";
+  _exclusiveGroupsPassthroughSaved = "";
 
   setup(model) {
     if (model?.disallow) {
@@ -50,6 +53,15 @@ export default class AdminPluginsOrbatController extends Controller {
     );
     this.orbatExclusiveGroups = exclusiveGroupsDisplay;
     this._exclusiveGroupsSaved = exclusiveGroupsSetting;
+    const exclusiveGroupsPassthroughSetting =
+      this.#normalizeExclusiveGroupsSetting(
+        this.siteSettings?.orbat_exclusive_groups_passthrough
+      );
+    const exclusiveGroupsPassthroughDisplay = this.#formatExclusiveGroupsDisplay(
+      exclusiveGroupsPassthroughSetting
+    );
+    this.orbatExclusiveGroupsPassthrough = exclusiveGroupsPassthroughDisplay;
+    this._exclusiveGroupsPassthroughSaved = exclusiveGroupsPassthroughSetting;
 
     let configuration = this.#prepareConfiguration(model?.configuration);
 
@@ -112,6 +124,15 @@ export default class AdminPluginsOrbatController extends Controller {
       this.updatingExclusiveGroups ||
       this.#normalizeExclusiveGroupsSetting(this.orbatExclusiveGroups) ===
         this._exclusiveGroupsSaved
+    );
+  }
+
+  get exclusiveGroupsPassthroughSaveDisabled() {
+    return (
+      this.updatingExclusiveGroupsPassthrough ||
+      this.#normalizeExclusiveGroupsSetting(
+        this.orbatExclusiveGroupsPassthrough
+      ) === this._exclusiveGroupsPassthroughSaved
     );
   }
 
@@ -234,7 +255,6 @@ export default class AdminPluginsOrbatController extends Controller {
     }
   }
 
-
   @action
   updateExclusiveGroupsInput(event) {
     this.orbatExclusiveGroups = event?.target?.value ?? "";
@@ -269,6 +289,44 @@ export default class AdminPluginsOrbatController extends Controller {
       popupAjaxError(error);
     } finally {
       this.updatingExclusiveGroups = false;
+    }
+  }
+
+  @action
+  updateExclusiveGroupsPassthroughInput(event) {
+    this.orbatExclusiveGroupsPassthrough = event?.target?.value ?? "";
+  }
+
+  @action
+  async saveExclusiveGroupsPassthrough(event) {
+    event?.preventDefault();
+    if (this.exclusiveGroupsPassthroughSaveDisabled) {
+      return;
+    }
+
+    this.updatingExclusiveGroupsPassthrough = true;
+    const normalizedSetting = this.#normalizeExclusiveGroupsSetting(
+      this.orbatExclusiveGroupsPassthrough
+    );
+    const normalizedDisplay = this.#formatExclusiveGroupsDisplay(
+      this.orbatExclusiveGroupsPassthrough
+    );
+
+    try {
+      await this.#updateTextSetting(
+        "orbat_exclusive_groups_passthrough",
+        normalizedSetting
+      );
+      this.orbatExclusiveGroupsPassthrough = normalizedDisplay;
+      this._exclusiveGroupsPassthroughSaved = normalizedSetting;
+      if (this.siteSettings) {
+        this.siteSettings.orbat_exclusive_groups_passthrough =
+          normalizedSetting;
+      }
+    } catch (error) {
+      popupAjaxError(error);
+    } finally {
+      this.updatingExclusiveGroupsPassthrough = false;
     }
   }
 

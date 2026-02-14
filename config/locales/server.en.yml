@@ -15,3 +15,4 @@ en:
     orbat_cache_ttl: "ORBAT cache TTL (seconds)"
     orbat_hide_hidden_groups: "Hide staff-only groups from ORBAT"
     orbat_exclusive_groups: "ORBAT exclusive groups"
+    orbat_exclusive_groups_passthrough: "ORBAT exclusive-group passthrough groups"

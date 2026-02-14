@@ -15,6 +15,10 @@ plugins:
     client: true
     type: list
     default: "Reserves|Force_Protection"
+  orbat_exclusive_groups_passthrough:
+    client: true
+    type: list
+    default: "REME|RRO|Media|RLC|3LSR|ITC"
   orbat_json:
     client: true
     type: text

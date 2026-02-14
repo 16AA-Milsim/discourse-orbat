@@ -61,6 +61,29 @@
           {{i18n "orbat_admin.settings.exclusive_groups_help"}}
         </div>
       </div>
+      <div class="orbat-setting orbat-setting--field">
+        <div class="orbat-setting__label">
+          {{i18n "orbat_admin.settings.exclusive_groups_passthrough_label"}}
+        </div>
+        <div class="orbat-setting__field">
+          <Input
+            @type="text"
+            @value={{this.orbatExclusiveGroupsPassthrough}}
+            @placeholder={{i18n "orbat_admin.settings.exclusive_groups_passthrough_placeholder"}}
+            @disabled={{this.updatingExclusiveGroupsPassthrough}}
+            {{on "input" this.updateExclusiveGroupsPassthroughInput}}
+          />
+          <DButton
+            @label="orbat_admin.settings.exclusive_groups_passthrough_save"
+            @action={{this.saveExclusiveGroupsPassthrough}}
+            @disabled={{this.exclusiveGroupsPassthroughSaveDisabled}}
+            class="btn-default btn-small"
+          />
+        </div>
+        <div class="orbat-setting__help">
+          {{i18n "orbat_admin.settings.exclusive_groups_passthrough_help"}}
+        </div>
+      </div>
     </div>
 
     <div class="orbat-admin__layout">

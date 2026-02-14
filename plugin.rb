@@ -38,6 +38,7 @@ after_initialize do
       orbat_cache_ttl
       orbat_hide_hidden_groups
       orbat_exclusive_groups
+      orbat_exclusive_groups_passthrough
       orbat_enabled
       orbat_admin_only
     ].include?(name.to_sym)
