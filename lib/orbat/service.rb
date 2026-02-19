@@ -6,6 +6,11 @@ require "date" # rubocop:disable Lint/RedundantRequireStatement
 class ::Orbat::Service
   CACHE_KEY = "orbat:tree"
   JOIN_DATE_FIELD = "orbat_join_date"
+  ROLE_PRIORITY_COY_IC = 0
+  ROLE_PRIORITY_COY_TWO_IC = 1
+  ROLE_PRIORITY_IC = 2
+  ROLE_PRIORITY_TWO_IC = 3
+  ROLE_PRIORITY_REGULAR = 4
 
   DEFAULT_CONFIGURATION = <<~JSON.freeze
     {
@@ -41,6 +46,7 @@ class ::Orbat::Service
         "Second_Lieutenant",
         "Pilot_Officer",
         "Acting_Second_Lieutenant",
+        "Warrant_Officer_Class_1",
         "Warrant_Officer_Class_2",
         "Colour_Sergeant",
         "Staff_Sergeant",
@@ -486,6 +492,7 @@ class ::Orbat::Service
     Second_Lieutenant
     Pilot_Officer
     Acting_Second_Lieutenant
+    Warrant_Officer_Class_1
     Warrant_Officer_Class_2
     Colour_Sergeant
     Staff_Sergeant
@@ -895,13 +902,11 @@ class ::Orbat::Service
     def sort_and_limit(users, select, context)
       limit = select && select["limit"]
       select_index = build_select_index(select)
-      sort_mode = select && select["sort"].to_s.downcase
-      rank_only = %w[rank rank_only rank-only rankonly].include?(sort_mode)
 
       sorted =
         users.sort_by do |user|
           [
-            (rank_only ? 0 : best_group_index(user, context, select_index)),
+            best_role_priority(user, context, select_index),
             best_rank_only_index(user, context),
             best_join_date(user, context),
             user.username_lower
@@ -920,19 +925,30 @@ class ::Orbat::Service
         .min || Float::INFINITY
     end
 
-    def best_group_index(user, context, select_index)
-      return Float::INFINITY if select_index.empty?
+    def best_role_priority(user, context, select_index)
+      return ROLE_PRIORITY_REGULAR if select_index.empty?
 
       candidates =
         Array(context[:user_groups][user.id]).select do |name|
           select_index.key?(name)
         end
 
-      return Float::INFINITY if candidates.empty?
+      return ROLE_PRIORITY_REGULAR if candidates.empty?
 
       candidates
-        .map { |name| select_index[name] }
-        .min || Float::INFINITY
+        .map { |name| role_priority_for_group(name) }
+        .min || ROLE_PRIORITY_REGULAR
+    end
+
+    def role_priority_for_group(group_name)
+      normalized = group_name.to_s.strip.downcase
+
+      return ROLE_PRIORITY_COY_IC if normalized.match?(/\Acoy[_-]ic\z/)
+      return ROLE_PRIORITY_COY_TWO_IC if normalized.match?(/\Acoy[_-]2ic\z/)
+      return ROLE_PRIORITY_TWO_IC if normalized.match?(/(?:^|[_-])2ic\z/)
+      return ROLE_PRIORITY_IC if normalized.match?(/(?:^|[_-])ic\z/)
+
+      ROLE_PRIORITY_REGULAR
     end
 
     def best_join_date(user, context)

@@ -123,7 +123,7 @@
                     </li>
                     <li>
                       <code>rankPriority</code> defines how ranks are ordered
-                      within a group.
+                      within each role bucket.
                     </li>
                     <li>
                       <code>nodes</code> is an array of unit definitions; the
@@ -219,9 +219,8 @@
                       <code>select</code>: resolves users. Use
                       <code>any</code>, <code>all</code>, <code>not</code>,
                       <code>limit</code>, <code>includeHidden</code>,
-                      <code>placeholder</code>, and optional
-                      <code>sort</code>. Group names must match Discourse group
-                      names.
+                      <code>placeholder</code>. Group names must match
+                      Discourse group names.
                     </li>
                     <li>
                       <code>children</code>: array of nested nodes using the same
@@ -233,15 +232,12 @@
                     </li>
                   </ul>
                   <p>
-                    Ordering is fixed: members are listed by the order of group
-                    names in <code>select.any</code>/<code>select.all</code> for
-                    that node, then by <code>rankPriority</code>, then by join
-                    date (manual 16AA Join Date if set, otherwise forum join
-                    date), then alphabetically. Place IC/2IC groups early in
-                    <code>select.any</code>. To ignore group order and sort by
-                    rank only (then join date, then name), set
-                    <code>select.sort</code> to <code>"rank"</code> on that
-                    node.
+                    Ordering is fixed: members are listed by role first
+                    (<code>Coy_IC</code>, then <code>Coy_2IC</code>, then other
+                    <code>*_IC</code>, then other <code>*_2IC</code>, then
+                    regular members), then by <code>rankPriority</code>, then by
+                    join date (manual 16AA Join Date if set, otherwise forum join
+                    date), then alphabetically by username.
                   </p>
                   <p>
                     <code>layout</code> on nodes is accepted and preserved in the
@@ -342,8 +338,7 @@
           "badge": "ab_inf_pl.svg",
           "icon": "red_hq.png",
           "select": {
-            "all": ["1_Platoon"],
-            "sort": "rank"
+            "all": ["1_Platoon"]
           },
           "layout": {
             "type": "column",

@@ -641,16 +641,12 @@ export default class AdminPluginsOrbatController extends Controller {
 
       const sortValue = `${select.sort || ""}`.trim();
       if (sortValue) {
-        const normalized = sortValue.toLowerCase();
-        const allowed = ["rank", "rank_only", "rank-only", "rankonly"];
-        if (!allowed.includes(normalized)) {
-          warnings.push(
-            i18n("orbat_admin.validation.invalid_sort", {
-              label: labelForWarning,
-              value: sortValue,
-            })
-          );
-        }
+        warnings.push(
+          i18n("orbat_admin.validation.sort_ignored", {
+            label: labelForWarning,
+            value: sortValue,
+          })
+        );
       }
     }
 
