@@ -219,8 +219,10 @@
                       <code>select</code>: resolves users. Use
                       <code>any</code>, <code>all</code>, <code>not</code>,
                       <code>limit</code>, <code>includeHidden</code>,
-                      <code>placeholder</code>. Group names must match
-                      Discourse group names.
+                      <code>placeholder</code>, and optional
+                      <code>sort</code> (<code>role</code> or
+                      <code>rank</code>). Group names must match Discourse group
+                      names.
                     </li>
                     <li>
                       <code>children</code>: array of nested nodes using the same
@@ -232,12 +234,14 @@
                     </li>
                   </ul>
                   <p>
-                    Ordering is fixed: members are listed by role first
+                    By default, members are listed by role first
                     (<code>Coy_IC</code>, then <code>Coy_2IC</code>, then other
                     <code>*_IC</code>, then other <code>*_2IC</code>, then
                     regular members), then by <code>rankPriority</code>, then by
                     join date (manual 16AA Join Date if set, otherwise forum join
-                    date), then alphabetically by username.
+                    date), then alphabetically by username. Set
+                    <code>select.sort</code> to <code>rank</code> on a node to
+                    skip role/position ordering for that node.
                   </p>
                   <p>
                     <code>layout</code> on nodes is accepted and preserved in the

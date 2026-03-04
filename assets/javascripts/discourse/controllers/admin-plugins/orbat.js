@@ -639,10 +639,10 @@ export default class AdminPluginsOrbatController extends Controller {
         );
       }
 
-      const sortValue = `${select.sort || ""}`.trim();
-      if (sortValue) {
+      const sortValue = `${select.sort || ""}`.trim().toLowerCase();
+      if (sortValue && !["role", "rank"].includes(sortValue)) {
         warnings.push(
-          i18n("orbat_admin.validation.sort_ignored", {
+          i18n("orbat_admin.validation.sort_unknown", {
             label: labelForWarning,
             value: sortValue,
           })

@@ -11,6 +11,8 @@ class ::Orbat::Service
   ROLE_PRIORITY_IC = 2
   ROLE_PRIORITY_TWO_IC = 3
   ROLE_PRIORITY_REGULAR = 4
+  SORT_MODE_ROLE = "role"
+  SORT_MODE_RANK = "rank"
 
   DEFAULT_CONFIGURATION = <<~JSON.freeze
     {
@@ -360,6 +362,7 @@ class ::Orbat::Service
           "badge": "adm_pl.svg",
           "icon": "",
           "select": {
+            "sort": "rank",
             "any": [
               "Coy_IC",
               "Coy_2IC",
@@ -901,21 +904,37 @@ class ::Orbat::Service
 
     def sort_and_limit(users, select, context)
       limit = select && select["limit"]
-      select_index = build_select_index(select)
+      sort_mode = normalize_sort_mode(select.is_a?(Hash) ? select["sort"] : nil)
+      select_index = sort_mode == SORT_MODE_ROLE ? build_select_index(select) : {}
 
       sorted =
         users.sort_by do |user|
-          [
-            best_role_priority(user, context, select_index),
-            best_rank_only_index(user, context),
-            best_join_date(user, context),
-            user.username_lower
-          ]
+          if sort_mode == SORT_MODE_RANK
+            [
+              best_rank_only_index(user, context),
+              best_join_date(user, context),
+              user.username_lower
+            ]
+          else
+            [
+              best_role_priority(user, context, select_index),
+              best_rank_only_index(user, context),
+              best_join_date(user, context),
+              user.username_lower
+            ]
+          end
         end
 
       sorted = sorted.first(limit) if limit.present?
 
       sorted.map { |user| serialize_user(user, context) }
+    end
+
+    def normalize_sort_mode(value)
+      normalized = value.to_s.strip.downcase
+      return SORT_MODE_RANK if normalized == SORT_MODE_RANK
+
+      SORT_MODE_ROLE
     end
 
     def best_rank_only_index(user, context)

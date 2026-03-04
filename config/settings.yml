@@ -370,6 +370,7 @@ plugins:
             "badge": "adm_pl.svg",
             "icon": "",
             "select": {
+              "sort": "rank",
               "any": [
                 "Coy_IC",
                 "Coy_2IC",

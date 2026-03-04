@@ -34,7 +34,7 @@ en:
         duplicate_id: "Duplicate node id: %{id}."
         missing_label: "Node is missing a label (code: %{code})."
         empty_select: "Node \"%{label}\" has empty values in select.any/select.all."
-        sort_ignored: "Node \"%{label}\" sets select.sort to %{value}, but role-first sorting is always enforced."
+        sort_unknown: "Node \"%{label}\" sets select.sort to \"%{value}\". Supported values are \"role\" and \"rank\"."
         empty_root_section: "rootSections entry is missing prefixes/codes."
         rank_priority_duplicates: "rankPriority contains duplicates: %{values}."
         unnamed_node: "Unnamed node"
