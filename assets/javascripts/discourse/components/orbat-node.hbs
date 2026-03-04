@@ -83,11 +83,23 @@
       {{/if}}
 
       {{#if this.hasUsers}}
-        <div class="orbat-node__users">
+        <div
+          class="orbat-node__users"
+          {{did-insert this.registerUsersContainer}}
+          {{did-update this.refreshUsersContainer this.users.length this.uniformHoverPreviewEnabled}}
+          {{will-destroy this.unregisterUsersContainer}}
+        >
           {{#each this.userColumns as |column|}}
             <ul class="orbat-node__users-column">
               {{#each column as |user|}}
-                <li class="orbat-node__user">
+                <li
+                  class={{concat "orbat-node__user" (if (this.isUniformPreviewActive user) " orbat-node__user--uniform-preview-active" "")}}
+                  data-uniform-preview-key={{this.uniformPreviewKey user}}
+                  {{on "mouseenter" (fn this.handleUserHoverEnter user)}}
+                  {{on "mouseleave" (fn this.handleUserHoverLeave user)}}
+                  {{on "focusin" (fn this.handleUserHoverEnter user)}}
+                  {{on "focusout" (fn this.handleUserHoverLeave user)}}
+                >
                   {{#if this.showAvatars}}
                     <UserAvatar
                       @user={{user}}
@@ -102,6 +114,61 @@
                   >
                     {{this.formatDisplayName user}}
                   </a>
+
+                  {{#if (this.isUniformPreviewVisible user)}}
+                    <span
+                      class={{this.uniformPreviewClass user}}
+                      style={{this.uniformPreviewStyle user}}
+                      role="tooltip"
+                      {{did-insert this.registerUniformPreviewElement user}}
+                      {{did-update this.updateUniformPreviewElement user (this.isUniformPreviewLoaded user) (this.uniformPreviewHasAdditionalQualifications user)}}
+                      {{will-destroy this.unregisterUniformPreviewElement user}}
+                    >
+                      {{#if (this.isUniformPreviewLoaded user)}}
+                        <img
+                          class="orbat-node__uniform-preview-image"
+                          src={{this.uniformPreviewUrl user}}
+                          alt={{this.uniformPreviewAlt user}}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span class="orbat-node__uniform-preview-title">
+                          {{this.uniformPreviewDisplayName user}}
+                        </span>
+
+                        {{#if (this.uniformPreviewHasAdditionalQualifications user)}}
+                          <span class="orbat-node__uniform-preview-quals-title">
+                            {{i18n "orbat.node.additional_qualifications"}}
+                          </span>
+                          <span class="orbat-node__uniform-preview-quals">
+                            {{#each (this.uniformPreviewAdditionalQualifications user) as |qualification|}}
+                              <span class="orbat-node__uniform-preview-qual">
+                                {{#if qualification.imageUrl}}
+                                  <img
+                                    class="orbat-node__uniform-preview-qual-image"
+                                    src={{qualification.imageUrl}}
+                                    alt={{qualification.name}}
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                {{/if}}
+                                <span class="orbat-node__uniform-preview-qual-name">
+                                  {{qualification.name}}
+                                </span>
+                              </span>
+                            {{/each}}
+                          </span>
+                        {{/if}}
+                      {{else}}
+                        <span class="orbat-node__uniform-preview-loading">
+                          <span class="orbat-node__uniform-preview-spinner" aria-hidden="true"></span>
+                          <span class="orbat-node__uniform-preview-loading-text">
+                            {{i18n "orbat.node.uniform_preview_loading"}}
+                          </span>
+                        </span>
+                      {{/if}}
+                    </span>
+                  {{/if}}
                 </li>
               {{/each}}
             </ul>

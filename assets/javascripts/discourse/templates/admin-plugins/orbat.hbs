@@ -38,6 +38,17 @@
           {{on "change" this.updateOrbatAdminOnly}}
         />
       </label>
+      <label class="orbat-setting">
+        <span class="orbat-setting__label">
+          {{i18n "orbat_admin.settings.uniform_hover_preview_enabled"}}
+        </span>
+        <Input
+          @type="checkbox"
+          @checked={{this.orbatUniformHoverPreviewEnabled}}
+          @disabled={{this.uniformHoverPreviewDisabled}}
+          {{on "change" this.updateOrbatUniformHoverPreviewEnabled}}
+        />
+      </label>
       <div class="orbat-setting orbat-setting--field">
         <div class="orbat-setting__label">
           {{i18n "orbat_admin.settings.exclusive_groups_label"}}

@@ -424,6 +424,11 @@ $orbat-guide-code-bg-dark: rgb(59, 59, 59) !default;
   --orbat-connector-gap: var(--orbat-connector-gap-default, 20px);
 }
 
+.orbat-branch__item:has(.orbat-node--uniform-preview-active),
+.orbat-branch__node:has(.orbat-node--uniform-preview-active) {
+  z-index: 45;
+}
+
 .orbat-branch__item::before,
 .orbat-branch__item::after {
   content: "";
@@ -536,6 +541,10 @@ $orbat-guide-code-bg-dark: rgb(59, 59, 59) !default;
   font-size: 9px;
 }
 
+.orbat-node--uniform-preview-active {
+  z-index: 55;
+}
+
 .orbat-node__card {
   background: var(--orbat-card-bg);
   border: 1px solid var(--orbat-card-border);
@@ -549,6 +558,7 @@ $orbat-guide-code-bg-dark: rgb(59, 59, 59) !default;
   align-items: center;
   box-sizing: border-box;
   text-align: center;
+  overflow: visible;
 }
 
 .orbat-node--theme-company .orbat-node__card,
@@ -696,10 +706,15 @@ $orbat-guide-code-bg-dark: rgb(59, 59, 59) !default;
 }
 
 .orbat-node__user {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 7px;
   font-size: 9px;
+}
+
+.orbat-node__user--uniform-preview-active {
+  z-index: 65;
 }
 
 .orbat-node__avatar {
@@ -731,6 +746,149 @@ $orbat-guide-code-bg-dark: rgb(59, 59, 59) !default;
 .orbat-node__user-link:focus-visible {
   background-color: var(--orbat-user-hover-bg);
   box-shadow: 0 0 0 1px var(--orbat-user-hover-bg);
+}
+
+.orbat-node__uniform-preview {
+  position: fixed;
+  left: var(--orbat-uniform-preview-left, 0px);
+  top: var(--orbat-uniform-preview-top, 0px);
+  transform: none;
+  width: min(260px, 60vw);
+  padding: 8px;
+  border-radius: 8px;
+  border: 0;
+  background: #000;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+
+.orbat-node__uniform-preview--above {
+  top: var(--orbat-uniform-preview-top, 0px);
+}
+
+.orbat-node__uniform-preview::after {
+  content: "";
+  position: absolute;
+  left: var(--orbat-uniform-preview-arrow-left, 50%);
+  bottom: calc(100% - 1px);
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #000;
+}
+
+.orbat-node__uniform-preview--above::after {
+  top: calc(100% - 1px);
+  bottom: auto;
+  border-top: 6px solid #000;
+  border-bottom: 0;
+}
+
+.orbat-node__uniform-preview-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+}
+
+.orbat-node__uniform-preview-loading {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px;
+}
+
+.orbat-node__uniform-preview-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: orbat-uniform-preview-spin 700ms linear infinite;
+}
+
+.orbat-node__uniform-preview-loading-text {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+}
+
+.orbat-node__uniform-preview-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.orbat-node__uniform-preview-quals-title {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.86);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.orbat-node__uniform-preview-quals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 2px;
+  row-gap: 0;
+}
+
+.orbat-node__uniform-preview-qual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  width: 72px;
+  min-height: 66px;
+  gap: 2px;
+  line-height: 1.15;
+  color: #fff;
+  border: 0;
+  border-radius: 0;
+  padding: 1px 2px;
+  box-sizing: border-box;
+}
+
+.orbat-node__uniform-preview-qual-image {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  display: block;
+}
+
+.orbat-node__uniform-preview-qual-name {
+  font-size: 7px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes orbat-uniform-preview-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .orbat-node__placeholder {

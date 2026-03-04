@@ -21,10 +21,12 @@ export default class AdminPluginsOrbatController extends Controller {
   @tracked isLoaded = false;
   @tracked orbatEnabled = false;
   @tracked orbatAdminOnly = false;
+  @tracked orbatUniformHoverPreviewEnabled = false;
   @tracked orbatExclusiveGroups = "";
   @tracked orbatExclusiveGroupsPassthrough = "";
   @tracked updatingEnabled = false;
   @tracked updatingAdminOnly = false;
+  @tracked updatingUniformHoverPreview = false;
   @tracked updatingExclusiveGroups = false;
   @tracked updatingExclusiveGroupsPassthrough = false;
   @tracked validationWarnings = [];
@@ -45,6 +47,8 @@ export default class AdminPluginsOrbatController extends Controller {
     this.isLoaded = false;
     this.orbatEnabled = !!this.siteSettings?.orbat_enabled;
     this.orbatAdminOnly = !!this.siteSettings?.orbat_admin_only;
+    this.orbatUniformHoverPreviewEnabled =
+      !!this.siteSettings?.orbat_uniform_hover_preview_enabled;
     const exclusiveGroupsSetting = this.#normalizeExclusiveGroupsSetting(
       this.siteSettings?.orbat_exclusive_groups
     );
@@ -117,6 +121,10 @@ export default class AdminPluginsOrbatController extends Controller {
 
   get adminOnlyDisabled() {
     return !this.orbatEnabled || this.updatingAdminOnly;
+  }
+
+  get uniformHoverPreviewDisabled() {
+    return !this.orbatEnabled || this.updatingUniformHoverPreview;
   }
 
   get exclusiveGroupsSaveDisabled() {
@@ -252,6 +260,43 @@ export default class AdminPluginsOrbatController extends Controller {
       popupAjaxError(error);
     } finally {
       this.updatingAdminOnly = false;
+    }
+  }
+
+  @action
+  async updateOrbatUniformHoverPreviewEnabled(event) {
+    if (this.updatingUniformHoverPreview) {
+      return;
+    }
+
+    const checked = event?.target?.checked;
+    if (
+      checked === undefined ||
+      checked === this.orbatUniformHoverPreviewEnabled
+    ) {
+      return;
+    }
+
+    this.updatingUniformHoverPreview = true;
+    const previousValue = this.orbatUniformHoverPreviewEnabled;
+    this.orbatUniformHoverPreviewEnabled = checked;
+
+    try {
+      await this.#updateBooleanSetting(
+        "orbat_uniform_hover_preview_enabled",
+        checked
+      );
+      if (this.siteSettings) {
+        this.siteSettings.orbat_uniform_hover_preview_enabled = checked;
+      }
+    } catch (error) {
+      this.orbatUniformHoverPreviewEnabled = previousValue;
+      if (this.siteSettings) {
+        this.siteSettings.orbat_uniform_hover_preview_enabled = previousValue;
+      }
+      popupAjaxError(error);
+    } finally {
+      this.updatingUniformHoverPreview = false;
     }
   }
 

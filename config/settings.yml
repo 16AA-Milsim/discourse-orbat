@@ -5,6 +5,10 @@ plugins:
   orbat_admin_only:
     client: true
     default: false
+  orbat_uniform_hover_preview_enabled:
+    client: true
+    type: bool
+    default: false
   orbat_cache_ttl:
     default: 60
     type: integer

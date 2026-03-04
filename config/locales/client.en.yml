@@ -11,6 +11,9 @@ en:
       node:
         placeholder: "-"
         empty: "-"
+        uniform_preview_alt: "Uniform preview for %{username}"
+        uniform_preview_loading: "Loading uniform preview..."
+        additional_qualifications: "Additional Qualifications"
       banner:
         view_settings: "Adjust structure in the ORBAT plugin settings."
     orbat_admin:
@@ -49,6 +52,7 @@ en:
       settings:
         enabled: "Enable the ORBAT plugin"
         admin_only: "Restrict ORBAT visibility to admins"
+        uniform_hover_preview_enabled: "Enable uniform PNG tooltip on member hover"
         exclusive_groups_label: "Exclusive groups"
         exclusive_groups_help: "Members of these groups are only shown in nodes that reference them. Separate group names with commas."
         exclusive_groups_placeholder: "Reserves, Force_Protection"
