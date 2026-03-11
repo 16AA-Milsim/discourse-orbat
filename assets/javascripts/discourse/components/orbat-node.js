@@ -18,18 +18,34 @@ const ADDITIONAL_QUALIFICATIONS_ORDER = Object.freeze([
   "3rd Class Marksman",
   "2nd Class Marksman",
   "1st Class Marksman",
+  "Sharpshooter",
+  "Sniper",
   "Basic Signals",
   "Advanced Signaller",
+  "CTM",
+  "CTM Bronze",
+  "CTM Silver",
+  "CTM Gold",
+  "CMT",
   "Mortar Operator",
   "Mortar Line Commander",
   "Advanced AT",
   "Heavy Weapons Operator",
   "Forward Observer",
   "JTAC",
+  "Paratrooper",
   "Freefaller",
   "Parachute Jump Instructor",
   "Pathfinder",
+  "Junior Pilot",
+  "Senior Pilot",
   "Apache Pilot Qualification",
+  "FTCC",
+  "CC",
+  "SCBC",
+  "PSBC",
+  "PCBC",
+  "ITC Instructor",
 ]);
 const ADDITIONAL_QUALIFICATIONS_ORDER_MAP = new Map(
   ADDITIONAL_QUALIFICATIONS_ORDER.map((name, index) => [name.toLowerCase(), index])
@@ -56,6 +72,8 @@ const ADDITIONAL_QUALIFICATIONS_IMAGE_MAP = Object.freeze({
   pathfinder: "pathfinder__v2.png",
   "apache pilot qualification": "apachepilotqual__v2.png",
 });
+const PROJECT_UNIFORM_UNIFORM_DATA_MODULE_ID =
+  "discourse/plugins/discourse-project-uniform/discourse/uniform-data";
 
 /**
  * @component orbat-node
@@ -1861,6 +1879,321 @@ export default class OrbatNode extends Component {
     }
   }
 
+  #projectUniformDataModule() {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        this.constructor,
+        "_projectUniformDataModule"
+      )
+    ) {
+      return this.constructor._projectUniformDataModule;
+    }
+
+    let module = null;
+    if (typeof globalThis !== "undefined") {
+      const loader = globalThis.requirejs || globalThis.require;
+      if (typeof loader === "function") {
+        try {
+          module = loader(PROJECT_UNIFORM_UNIFORM_DATA_MODULE_ID);
+        } catch {
+          module = null;
+        }
+      }
+    }
+
+    this.constructor._projectUniformDataModule = module || null;
+    return this.constructor._projectUniformDataModule;
+  }
+
+  #resolveAdditionalQualificationsFromProjectUniform(user, userBadges, idToBadge) {
+    try {
+      const uniformData = this.#projectUniformDataModule();
+      const qualificationsByNameLC = uniformData?.qualificationsByNameLC;
+      const ranks = Array.isArray(uniformData?.ranks) ? uniformData.ranks : [];
+      if (!qualificationsByNameLC || !ranks.length) {
+        return null;
+      }
+
+      const toLC = (value) => `${value || ""}`.toLowerCase();
+      const highestIn = (order, have) => {
+        for (let index = order.length - 1; index >= 0; index -= 1) {
+          const candidate = order[index];
+          if (have.has(candidate)) {
+            return candidate;
+          }
+        }
+
+        return null;
+      };
+
+      const leadershipAliasMapLC = Object.fromEntries(
+        Object.entries(uniformData?.leadershipQualificationAliases || {}).map(
+          ([alias, canonical]) => [toLC(alias), toLC(canonical)]
+        )
+      );
+      const canonicalLeadershipName = (value) => leadershipAliasMapLC[value] || value;
+      const leadershipOrderLC = Array.from(
+        new Set(
+          (uniformData?.leadershipQualificationsOrder || [])
+            .map((name) => canonicalLeadershipName(toLC(name)))
+            .filter(Boolean)
+        )
+      );
+      const marksmanshipOrderLC = (uniformData?.marksmanshipQualificationsOrder || []).map(
+        toLC
+      );
+      const pilotOrderLC = (uniformData?.pilotQualificationsOrder || []).map(toLC);
+      const ctmOrderLC = (uniformData?.ctmQualificationsOrder || []).map(toLC);
+
+      const leadershipOrderSetLC = new Set(leadershipOrderLC);
+      const marksmanshipOrderSetLC = new Set(marksmanshipOrderLC);
+      const pilotOrderSetLC = new Set(pilotOrderLC);
+      const ctmOrderSetLC = new Set(ctmOrderLC);
+
+      const groupNameSetLC = new Set(
+        (Array.isArray(user?.groups) ? user.groups : [])
+          .map((groupName) => toLC(`${groupName || ""}`.trim()))
+          .filter(Boolean)
+      );
+      const is16CSMR = ["16csmr", "16csmr_ic", "16csmr_2ic"].some((name) =>
+        groupNameSetLC.has(name)
+      );
+      const highestRank =
+        ranks.find((rank) => groupNameSetLC.has(toLC(rank?.name))) || null;
+
+      const allQualifications = [];
+      const seenQualifications = new Set();
+      (Array.isArray(userBadges) ? userBadges : []).forEach((entry) => {
+        const badge = idToBadge.get(entry?.badge_id);
+        if (!badge?.name) {
+          return;
+        }
+
+        const qualification = qualificationsByNameLC[toLC(badge.name)];
+        if (!qualification || seenQualifications.has(qualification.name)) {
+          return;
+        }
+
+        seenQualifications.add(qualification.name);
+        allQualifications.push({ qual: qualification, label: badge.name });
+      });
+
+      if (toLC(highestRank?.name) === "recruit") {
+        return allQualifications.map((entry) => ({
+          name: entry?.label || entry?.qual?.name || "",
+          imageUrl: entry?.qual?.tooltipImage || entry?.qual?.imageKey || null,
+        }));
+      }
+
+      const badgeNames = (Array.isArray(userBadges) ? userBadges : [])
+        .map((entry) => idToBadge.get(entry?.badge_id)?.name)
+        .filter(Boolean);
+      const badgeNameSetLC = new Set(badgeNames.map(toLC));
+      const leadershipBadgeNameSetLC = new Set(
+        [...badgeNameSetLC].map((name) => canonicalLeadershipName(name))
+      );
+
+      const highestLeadershipLC = highestIn(leadershipOrderLC, leadershipBadgeNameSetLC);
+      const highestMarksmanshipLC = highestIn(marksmanshipOrderLC, badgeNameSetLC);
+      const highestPilotLC = highestIn(pilotOrderLC, badgeNameSetLC);
+      const highestCtmLC = highestIn(ctmOrderLC, badgeNameSetLC);
+      const highestRankLC = toLC(highestRank?.name);
+      const cmtKeyLC = toLC("CMT");
+      const hasLegacyCmt = badgeNameSetLC.has(cmtKeyLC);
+
+      const qualsToRender = [];
+      (Array.isArray(userBadges) ? userBadges : []).forEach((entry) => {
+        const badge = idToBadge.get(entry?.badge_id);
+        if (!badge?.name) {
+          return;
+        }
+
+        const nameLC = toLC(badge.name);
+        const canonicalNameLC = canonicalLeadershipName(nameLC);
+        if (is16CSMR && marksmanshipOrderSetLC.has(nameLC)) {
+          return;
+        }
+
+        const qualification = qualificationsByNameLC[nameLC];
+        const isLeader = leadershipOrderSetLC.has(canonicalNameLC);
+        const isMarks = marksmanshipOrderSetLC.has(nameLC);
+        const isPilot = pilotOrderSetLC.has(nameLC);
+        const isCtm = ctmOrderSetLC.has(nameLC);
+
+        if (isLeader && highestRank?.service === "RAF") {
+          return;
+        }
+        if (isCtm && hasLegacyCmt) {
+          return;
+        }
+
+        if (
+          (isLeader && canonicalNameLC !== highestLeadershipLC) ||
+          (isMarks && nameLC !== highestMarksmanshipLC) ||
+          (isPilot && nameLC !== highestPilotLC) ||
+          (isCtm && nameLC !== highestCtmLC)
+        ) {
+          return;
+        }
+
+        const restrictedRankSetLC = new Set(
+          (qualification?.restrictedRanks || []).map(toLC)
+        );
+        if (qualification?.imageKey && !restrictedRankSetLC.has(highestRankLC)) {
+          if (nameLC === cmtKeyLC && !is16CSMR) {
+            return;
+          }
+          qualsToRender.push(qualification);
+        }
+      });
+
+      const renderedQualNames = new Set(
+        qualsToRender.map((qualification) => qualification?.name).filter(Boolean)
+      );
+      const marksmanshipNames = allQualifications
+        .map((entry) => toLC(entry?.qual?.name))
+        .filter((name) => name && marksmanshipOrderSetLC.has(name));
+      const highestMarksmanshipAdditionalLC = marksmanshipNames.length
+        ? highestIn(marksmanshipOrderLC, new Set(marksmanshipNames))
+        : null;
+
+      const filterAdditionalQualificationOverrides = (entries) => {
+        if (!entries.length) {
+          return [];
+        }
+
+        const byName = new Map(entries.map((entry) => [entry?.qual?.name, entry]));
+        if (byName.has("Advanced AT")) {
+          byName.delete("Basic AT");
+        }
+        if (byName.has("Advanced Signaller")) {
+          byName.delete("Basic Signals");
+        }
+
+        const filtered = Array.from(byName.values());
+        const commandNames = filtered
+          .map((entry) => canonicalLeadershipName(toLC(entry?.qual?.name)))
+          .filter((name) => name && leadershipOrderSetLC.has(name));
+        const highestCommandLC = commandNames.length
+          ? highestIn(leadershipOrderLC, new Set(commandNames))
+          : null;
+
+        if (!highestCommandLC) {
+          return filtered;
+        }
+
+        return filtered.filter((entry) => {
+          const nameLC = canonicalLeadershipName(toLC(entry?.qual?.name));
+          if (!leadershipOrderSetLC.has(nameLC)) {
+            return true;
+          }
+          return nameLC === highestCommandLC;
+        });
+      };
+
+      return filterAdditionalQualificationOverrides(
+        allQualifications
+          .filter((entry) => !renderedQualNames.has(entry?.qual?.name))
+          .filter((entry) => {
+            const nameLC = toLC(entry?.qual?.name);
+            if (!nameLC || !marksmanshipOrderSetLC.has(nameLC)) {
+              return true;
+            }
+            return highestMarksmanshipAdditionalLC
+              ? nameLC === highestMarksmanshipAdditionalLC
+              : true;
+          })
+      ).map((entry) => ({
+        name: entry?.label || entry?.qual?.name || "",
+        imageUrl: entry?.qual?.tooltipImage || entry?.qual?.imageKey || null,
+      }));
+    } catch {
+      return null;
+    }
+  }
+
+  #fallbackAdditionalQualifications(userBadges, idToBadge) {
+    const matched = [];
+
+    (Array.isArray(userBadges) ? userBadges : []).forEach((entry) => {
+      const badge = idToBadge.get(entry?.badge_id);
+      const name = `${badge?.name || ""}`.trim();
+      if (!name) {
+        return;
+      }
+
+      const order = ADDITIONAL_QUALIFICATIONS_ORDER_MAP.get(name.toLowerCase());
+      if (!Number.isFinite(order)) {
+        return;
+      }
+
+      matched.push({
+        name,
+        order,
+        imageUrl: null,
+      });
+    });
+
+    return matched;
+  }
+
+  #formatAdditionalQualificationEntries(entries) {
+    const matched = [];
+    const seen = new Set();
+
+    (Array.isArray(entries) ? entries : []).forEach((entry) => {
+      const rawName = `${entry?.name || ""}`.trim();
+      if (!rawName) {
+        return;
+      }
+
+      const lowerName = rawName.toLowerCase();
+      if (seen.has(lowerName)) {
+        return;
+      }
+      seen.add(lowerName);
+
+      const mapOrder = ADDITIONAL_QUALIFICATIONS_ORDER_MAP.get(lowerName);
+      const order =
+        Number.isFinite(entry?.order) && entry.order >= 0
+          ? entry.order
+          : Number.isFinite(mapOrder)
+            ? mapOrder
+            : Number.MAX_SAFE_INTEGER;
+      const name = Number.isFinite(mapOrder)
+        ? ADDITIONAL_QUALIFICATIONS_ORDER[mapOrder] || rawName
+        : rawName;
+
+      let imageUrl = `${entry?.imageUrl || ""}`.trim();
+      if (!imageUrl) {
+        const imageFile = ADDITIONAL_QUALIFICATIONS_IMAGE_MAP[lowerName] || null;
+        imageUrl = imageFile
+          ? getURLWithCDN(
+            `/plugins/discourse-project-uniform/images/tooltip_qualificationimages/${imageFile}`
+          )
+          : "";
+      }
+
+      matched.push({
+        name,
+        order,
+        imageUrl: imageUrl || null,
+      });
+    });
+
+    matched.sort((a, b) => {
+      if (a.order !== b.order) {
+        return a.order - b.order;
+      }
+      return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+    });
+
+    return matched.map((entry) => ({
+      name: entry.name,
+      imageUrl: entry.imageUrl,
+    }));
+  }
+
   async #fetchAdditionalQualifications(user) {
     const requestUrl = this.#userBadgesUrlForUser(user);
     if (!requestUrl) {
@@ -1888,48 +2221,22 @@ export default class OrbatNode extends Component {
       const idToBadge = new Map(
         badges
           .filter((badge) => badge?.id && badge?.name)
-          .map((badge) => [badge.id, badge.name])
+          .map((badge) => [badge.id, badge])
       );
 
-      const matched = [];
-      const seen = new Set();
+      const projectUniformEntries =
+        this.#resolveAdditionalQualificationsFromProjectUniform(
+          user,
+          userBadges,
+          idToBadge
+        );
+      if (projectUniformEntries !== null) {
+        return this.#formatAdditionalQualificationEntries(projectUniformEntries);
+      }
 
-      userBadges.forEach((entry) => {
-        const name = `${idToBadge.get(entry?.badge_id) || ""}`.trim();
-        if (!name) {
-          return;
-        }
-
-        const lowerName = name.toLowerCase();
-        const order = ADDITIONAL_QUALIFICATIONS_ORDER_MAP.get(lowerName);
-        if (!Number.isFinite(order) || seen.has(lowerName)) {
-          return;
-        }
-
-        seen.add(lowerName);
-        const imageFile = ADDITIONAL_QUALIFICATIONS_IMAGE_MAP[lowerName] || null;
-        matched.push({
-          name: ADDITIONAL_QUALIFICATIONS_ORDER[order] || name,
-          order,
-          imageUrl: imageFile
-            ? getURLWithCDN(
-              `/plugins/discourse-project-uniform/images/tooltip_qualificationimages/${imageFile}`
-            )
-            : null,
-        });
-      });
-
-      matched.sort((a, b) => {
-        if (a.order !== b.order) {
-          return a.order - b.order;
-        }
-        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
-      });
-
-      return matched.map((entry) => ({
-        name: entry.name,
-        imageUrl: entry.imageUrl,
-      }));
+      return this.#formatAdditionalQualificationEntries(
+        this.#fallbackAdditionalQualifications(userBadges, idToBadge)
+      );
     } catch {
       return [];
     }
