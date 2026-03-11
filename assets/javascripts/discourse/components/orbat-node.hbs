@@ -99,6 +99,8 @@
                   {{on "mouseleave" (fn this.handleUserHoverLeave user)}}
                   {{on "focusin" (fn this.handleUserHoverEnter user)}}
                   {{on "focusout" (fn this.handleUserHoverLeave user)}}
+                  {{on "pointerdown" (fn this.handleUserPointerDown user)}}
+                  {{on "mousedown" (fn this.handleUserMouseDown user)}}
                 >
                   {{#if this.showAvatars}}
                     <UserAvatar
@@ -138,23 +140,27 @@
 
                         {{#if (this.uniformPreviewHasAdditionalQualifications user)}}
                           <span class="orbat-node__uniform-preview-quals-title">
-                            {{i18n "orbat.node.additional_qualifications"}}
+                            {{this.uniformPreviewQualificationsTitle user}}
                           </span>
                           <span class="orbat-node__uniform-preview-quals">
-                            {{#each (this.uniformPreviewAdditionalQualifications user) as |qualification|}}
-                              <span class="orbat-node__uniform-preview-qual">
-                                {{#if qualification.imageUrl}}
-                                  <img
-                                    class="orbat-node__uniform-preview-qual-image"
-                                    src={{qualification.imageUrl}}
-                                    alt={{qualification.name}}
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                {{/if}}
-                                <span class="orbat-node__uniform-preview-qual-name">
-                                  {{qualification.name}}
-                                </span>
+                            {{#each (this.uniformPreviewAdditionalQualificationRows user) as |row|}}
+                              <span class="orbat-node__uniform-preview-quals-row">
+                                {{#each row as |qualification|}}
+                                  <span class="orbat-node__uniform-preview-qual">
+                                    {{#if qualification.imageUrl}}
+                                      <img
+                                        class="orbat-node__uniform-preview-qual-image"
+                                        src={{qualification.imageUrl}}
+                                        alt={{qualification.name}}
+                                        loading="lazy"
+                                        decoding="async"
+                                      />
+                                    {{/if}}
+                                    <span class="orbat-node__uniform-preview-qual-name">
+                                      {{qualification.name}}
+                                    </span>
+                                  </span>
+                                {{/each}}
                               </span>
                             {{/each}}
                           </span>

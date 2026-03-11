@@ -24,7 +24,6 @@ plugins:
     type: list
     default: "REME|RRO|Media|RLC|3LSR|ITC"
   orbat_json:
-    client: true
     type: text
     default: |
       {

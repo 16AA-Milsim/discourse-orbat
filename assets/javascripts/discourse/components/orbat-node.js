@@ -65,18 +65,21 @@ const ADDITIONAL_QUALIFICATIONS_IMAGE_MAP = Object.freeze({
 export default class OrbatNode extends Component {
   static UNAVAILABLE_PREVIEW_RECHECK_MS = 30_000;
   static UNIFORM_PREVIEW_MARGIN_PX = 8;
-  static UNIFORM_PREVIEW_GAP_PX = 7;
-  static UNIFORM_PREVIEW_POINTER_CLEARANCE_PX = 22;
-  static UNIFORM_PREVIEW_POINTER_CLEARANCE_COARSE_PX = 36;
+  static UNIFORM_PREVIEW_GAP_PX = 8;
   static UNIFORM_PREVIEW_PREFETCH_IDLE_TIMEOUT_MS = 1_200;
   static UNIFORM_PREVIEW_PREFETCH_CONCURRENCY = 2;
+  static UNIFORM_PREVIEW_FOCUS_SUPPRESS_MS = 500;
+  static UNIFORM_PREVIEW_QUAL_ITEM_WIDTH_PX = 44;
+  static UNIFORM_PREVIEW_QUAL_DEFAULT_GAP_PX = 12;
+  static UNIFORM_PREVIEW_DEFAULT_WIDTH_PX = 260;
+  static UNIFORM_PREVIEW_DEFAULT_HORIZONTAL_PADDING_PX = 16;
 
   @service siteSettings;
+  @service orbatUniformPreviewCache;
 
   @tracked labelMeasuredWidth = null;
   @tracked forceSingleLineLabel = false;
   @tracked hoveredUniformPreviewKey = null;
-  @tracked uniformPreviewCache = Object.create(null);
   @tracked uniformPreviewLayoutCache = Object.create(null);
 
   _labelTextElement = null;
@@ -88,7 +91,7 @@ export default class OrbatNode extends Component {
   _uniformPreviewLayoutFrames = new Map();
   _uniformPreviewElements = new Map();
   _uniformPreviewResizeObservers = new Map();
-  _uniformPreviewPointerByKey = new Map();
+  _uniformPreviewSuppressFocusUntilByKey = new Map();
   _uniformPreviewViewportListening = false;
   _boundHandleUniformPreviewViewportChange = null;
   _usersContainerElement = null;
@@ -104,11 +107,10 @@ export default class OrbatNode extends Component {
     registerDestructor(this, () => {
       this._uniformPreviewPrefetchToken += 1;
       this.#cancelUniformPreviewPrefetch();
-      this.#clearUniformPreviewCache();
       this.#clearUniformPreviewLayoutCache();
       this.#cancelAllUniformPreviewLayoutFrames();
       this.#disconnectAllUniformPreviewResizeObservers();
-      this._uniformPreviewPointerByKey.clear();
+      this._uniformPreviewSuppressFocusUntilByKey.clear();
       this.#teardownUniformPreviewViewportListeners();
     });
   }
@@ -380,15 +382,6 @@ export default class OrbatNode extends Component {
     const uniformPluginPublicEnabled =
       this.siteSettings?.discourse_project_uniform_public_enabled;
 
-    // Keep ORBAT independent: if the other plugin/settings are absent, allow
-    // hover checks and gracefully treat missing PNGs as unavailable.
-    if (
-      uniformPluginEnabled === undefined ||
-      uniformPluginPublicEnabled === undefined
-    ) {
-      return true;
-    }
-
     return !!(uniformPluginEnabled && uniformPluginPublicEnabled);
   }
 
@@ -483,6 +476,25 @@ export default class OrbatNode extends Component {
   }
 
   @action
+  handleUserPointerDown(user) {
+    this.#handleUserPressStart(user);
+  }
+
+  @action
+  handleUserMouseDown(user) {
+    this.#handleUserPressStart(user);
+  }
+
+  #handleUserPressStart(user) {
+    const key = this.#uniformPreviewKeyForUser(user);
+    if (!key) {
+      return;
+    }
+
+    this.#suppressFocusUniformPreviewForKey(key);
+  }
+
+  @action
   async handleUserHoverEnter(user, event) {
     if (!this.uniformHoverPreviewEnabled) {
       return;
@@ -493,7 +505,10 @@ export default class OrbatNode extends Component {
       return;
     }
 
-    this.#setPointerPositionForKey(key, event);
+    if (event?.type === "focusin" && this.#isUniformPreviewFocusSuppressedForKey(key)) {
+      return;
+    }
+
     this.hoveredUniformPreviewKey = key;
     await this.#ensureUniformPreviewLoaded(user, key);
   }
@@ -505,16 +520,7 @@ export default class OrbatNode extends Component {
       return;
     }
 
-    if (this.hoveredUniformPreviewKey === key) {
-      this.hoveredUniformPreviewKey = null;
-    }
-
-    this._uniformPreviewElements.delete(key);
-    this._uniformPreviewPointerByKey.delete(key);
-    this.#disconnectUniformPreviewResizeObserver(key);
-    this.#clearUniformPreviewLayoutForKey(key);
-    this.#cancelUniformPreviewLayoutFrame(key);
-    this.#teardownUniformPreviewViewportListeners();
+    this.#deactivateUniformPreviewKey(key);
   }
 
   @action
@@ -582,8 +588,25 @@ export default class OrbatNode extends Component {
   }
 
   @action
+  uniformPreviewAdditionalQualificationRows(user) {
+    return this.#balancedUniformPreviewQualificationRows(
+      user,
+      this.uniformPreviewAdditionalQualifications(user)
+    );
+  }
+
+  @action
   uniformPreviewHasAdditionalQualifications(user) {
     return this.uniformPreviewAdditionalQualifications(user).length > 0;
+  }
+
+  @action
+  uniformPreviewQualificationsTitle(user) {
+    return i18n(
+      this.#isRecruitUser(user)
+        ? "orbat.node.qualifications"
+        : "orbat.node.additional_qualifications"
+    );
   }
 
   @action
@@ -681,7 +704,6 @@ export default class OrbatNode extends Component {
     }
 
     this._uniformPreviewElements.delete(key);
-    this._uniformPreviewPointerByKey.delete(key);
     this.#disconnectUniformPreviewResizeObserver(key);
     this.#cancelUniformPreviewLayoutFrame(key);
     this.#clearUniformPreviewLayoutForKey(key);
@@ -1107,6 +1129,68 @@ export default class OrbatNode extends Component {
     return list.includes(filename);
   }
 
+  #isRecruitUser(user) {
+    const explicitValue = user?.isRecruit ?? user?.is_recruit;
+    if (explicitValue !== undefined && explicitValue !== null) {
+      return !!explicitValue;
+    }
+
+    const groups = Array.isArray(user?.groups) ? user.groups : [];
+    return groups
+      .map((groupName) =>
+        `${groupName || ""}`
+          .trim()
+          .toLowerCase()
+          .replace(/[\s-]+/g, "_")
+      )
+      .includes("recruit");
+  }
+
+  #deactivateUniformPreviewKey(key) {
+    if (!key) {
+      return;
+    }
+
+    if (this.hoveredUniformPreviewKey === key) {
+      this.hoveredUniformPreviewKey = null;
+    }
+
+    this._uniformPreviewElements.delete(key);
+    this.#disconnectUniformPreviewResizeObserver(key);
+    this.#clearUniformPreviewLayoutForKey(key);
+    this.#cancelUniformPreviewLayoutFrame(key);
+    this.#teardownUniformPreviewViewportListeners();
+  }
+
+  #suppressFocusUniformPreviewForKey(key) {
+    if (!key) {
+      return;
+    }
+
+    this._uniformPreviewSuppressFocusUntilByKey.set(
+      key,
+      Date.now() + this.constructor.UNIFORM_PREVIEW_FOCUS_SUPPRESS_MS
+    );
+  }
+
+  #isUniformPreviewFocusSuppressedForKey(key) {
+    if (!key) {
+      return false;
+    }
+
+    const suppressUntil = this._uniformPreviewSuppressFocusUntilByKey.get(key);
+    if (!Number.isFinite(suppressUntil)) {
+      return false;
+    }
+
+    if (Date.now() <= suppressUntil) {
+      return true;
+    }
+
+    this._uniformPreviewSuppressFocusUntilByKey.delete(key);
+    return false;
+  }
+
   #uniformPreviewKeyForUser(user) {
     return `${user?.id ?? user?.username ?? user?.name ?? ""}`.trim();
   }
@@ -1116,7 +1200,10 @@ export default class OrbatNode extends Component {
       return null;
     }
 
-    return this.uniformPreviewCache[key] || null;
+    // Track service changes so tooltip state updates reactively.
+    this.orbatUniformPreviewCache.revision;
+
+    return this.orbatUniformPreviewCache.getState(key);
   }
 
   #uniformPreviewLayoutForKey(key) {
@@ -1128,32 +1215,7 @@ export default class OrbatNode extends Component {
   }
 
   #setUniformPreviewState(key, state) {
-    const previousState = this.uniformPreviewCache[key];
-    this.#revokeObjectUrlIfNeeded(previousState?.url, state?.url);
-
-    this.uniformPreviewCache = {
-      ...this.uniformPreviewCache,
-      [key]: state,
-    };
-  }
-
-  #revokeObjectUrlIfNeeded(currentUrl, nextUrl = null) {
-    if (!currentUrl || currentUrl === nextUrl || !currentUrl.startsWith("blob:")) {
-      return;
-    }
-
-    try {
-      URL.revokeObjectURL(currentUrl);
-    } catch {
-      // noop
-    }
-  }
-
-  #clearUniformPreviewCache() {
-    Object.values(this.uniformPreviewCache || {}).forEach((state) => {
-      this.#revokeObjectUrlIfNeeded(state?.url);
-    });
-    this.uniformPreviewCache = Object.create(null);
+    this.orbatUniformPreviewCache.setState(key, state);
   }
 
   #setUniformPreviewLayout(key, layout) {
@@ -1452,13 +1514,13 @@ export default class OrbatNode extends Component {
       return;
     }
 
-    const layout = this.#calculateUniformPreviewLayout(key, element);
+    const layout = this.#calculateUniformPreviewLayout(element);
     if (layout) {
       this.#setUniformPreviewLayout(key, layout);
     }
   }
 
-  #calculateUniformPreviewLayout(key, element) {
+  #calculateUniformPreviewLayout(element) {
     if (typeof window === "undefined" || !element?.isConnected) {
       return null;
     }
@@ -1472,25 +1534,17 @@ export default class OrbatNode extends Component {
 
     const margin = this.constructor.UNIFORM_PREVIEW_MARGIN_PX;
     const gap = this.constructor.UNIFORM_PREVIEW_GAP_PX;
-    const pointerClearance = this.#uniformPreviewPointerClearancePx();
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    const pointer = this._uniformPreviewPointerByKey.get(key) || null;
 
     const anchorCenterX = anchorRect.left + anchorRect.width / 2;
     const defaultLeft = anchorCenterX - rect.width / 2;
 
     const belowTopByAnchor = anchorRect.bottom + gap;
-    const belowTopByPointer = Number.isFinite(pointer?.y)
-      ? pointer.y + pointerClearance
-      : belowTopByAnchor;
-    const defaultTopBelow = Math.max(belowTopByAnchor, belowTopByPointer);
+    const defaultTopBelow = belowTopByAnchor;
 
     const aboveTopByAnchor = anchorRect.top - gap - rect.height;
-    const aboveTopByPointer = Number.isFinite(pointer?.y)
-      ? pointer.y - pointerClearance - rect.height
-      : aboveTopByAnchor;
-    const defaultTopAbove = Math.min(aboveTopByAnchor, aboveTopByPointer);
+    const defaultTopAbove = aboveTopByAnchor;
 
     const maxTop = Math.max(margin, viewportHeight - margin - rect.height);
     const overflowBelow = Math.max(
@@ -1529,44 +1583,159 @@ export default class OrbatNode extends Component {
     };
   }
 
-  #setPointerPositionForKey(key, event) {
-    const clientX = event?.clientX;
-    const clientY = event?.clientY;
-
-    if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
-      this._uniformPreviewPointerByKey.set(key, {
-        x: clientX,
-        y: clientY,
-      });
-      return;
+  #balancedUniformPreviewQualificationRows(user, qualifications) {
+    const items = Array.isArray(qualifications) ? qualifications : [];
+    const total = items.length;
+    if (!total) {
+      return [];
     }
 
-    this._uniformPreviewPointerByKey.delete(key);
-  }
-
-  #uniformPreviewPointerClearancePx() {
-    if (typeof window === "undefined" || !window.matchMedia) {
-      return this.constructor.UNIFORM_PREVIEW_POINTER_CLEARANCE_PX;
+    if (total === 1) {
+      return [items];
     }
 
-    return window.matchMedia("(pointer: coarse)").matches
-      ? this.constructor.UNIFORM_PREVIEW_POINTER_CLEARANCE_COARSE_PX
-      : this.constructor.UNIFORM_PREVIEW_POINTER_CLEARANCE_PX;
+    const itemWidth = this.#uniformPreviewQualificationItemWidthPx(user);
+    const columnGap = this.#uniformPreviewQualificationColumnGapPx(user);
+    const availableWidth = this.#uniformPreviewQualificationAvailableWidthPx(user);
+    const maxColumns = Math.max(
+      1,
+      Math.floor((availableWidth + columnGap) / (itemWidth + columnGap))
+    );
+    const rows = Math.max(1, Math.ceil(total / maxColumns));
+    if (rows === 1) {
+      return [items];
+    }
+
+    const baseCount = Math.floor(total / rows);
+    const remainder = total % rows;
+    const result = [];
+
+    let index = 0;
+    for (let row = 0; row < rows; row += 1) {
+      const count = baseCount + (row < remainder ? 1 : 0);
+      result.push(items.slice(index, index + count));
+      index += count;
+    }
+
+    return result;
   }
 
-  #uniformPngUrlForUsername(username) {
-    const normalized = `${username}`.trim().toLowerCase();
-    return getURL(`/uniform/${encodeURIComponent(normalized)}.png`);
+  #uniformPreviewQualificationItemWidthPx(user) {
+    const key = this.#uniformPreviewKeyForUser(user);
+    const listElement = key
+      ? this._uniformPreviewElements
+          .get(key)
+          ?.querySelector?.(".orbat-node__uniform-preview-quals")
+      : null;
+
+    if (typeof window !== "undefined" && listElement) {
+      const styles = window.getComputedStyle(listElement);
+      const cssValue = Number.parseFloat(
+        styles.getPropertyValue("--orbat-uniform-preview-qual-item-width")
+      );
+      if (Number.isFinite(cssValue) && cssValue > 0) {
+        return cssValue;
+      }
+    }
+
+    return this.constructor.UNIFORM_PREVIEW_QUAL_ITEM_WIDTH_PX;
   }
 
-  #userBadgesUrlForUsername(username) {
-    const normalized = `${username}`.trim();
-    return getURL(`/user-badges/${encodeURIComponent(normalized)}.json`);
+  #uniformPreviewQualificationColumnGapPx(user) {
+    const key = this.#uniformPreviewKeyForUser(user);
+    const listElement = key
+      ? this._uniformPreviewElements
+          .get(key)
+          ?.querySelector?.(".orbat-node__uniform-preview-quals")
+      : null;
+
+    if (typeof window !== "undefined" && listElement) {
+      const styles = window.getComputedStyle(listElement);
+      const cssVariable = Number.parseFloat(
+        styles.getPropertyValue("--orbat-uniform-preview-qual-gap")
+      );
+      if (Number.isFinite(cssVariable) && cssVariable >= 0) {
+        return cssVariable;
+      }
+
+      const firstRow = listElement.querySelector?.(".orbat-node__uniform-preview-quals-row");
+      if (firstRow) {
+        const rowGap = Number.parseFloat(window.getComputedStyle(firstRow).columnGap);
+        if (Number.isFinite(rowGap) && rowGap >= 0) {
+          return rowGap;
+        }
+      }
+    }
+
+    return this.constructor.UNIFORM_PREVIEW_QUAL_DEFAULT_GAP_PX;
+  }
+
+  #uniformPreviewQualificationAvailableWidthPx(user) {
+    const key = this.#uniformPreviewKeyForUser(user);
+    const previewElement = key ? this._uniformPreviewElements.get(key) : null;
+    const listElement = previewElement?.querySelector?.(".orbat-node__uniform-preview-quals");
+    const measuredWidth = listElement?.clientWidth || previewElement?.clientWidth;
+    if (Number.isFinite(measuredWidth) && measuredWidth > 0) {
+      return measuredWidth;
+    }
+
+    if (typeof window !== "undefined") {
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      if (viewportWidth > 0) {
+        const estimated =
+          Math.min(
+            this.constructor.UNIFORM_PREVIEW_DEFAULT_WIDTH_PX,
+            viewportWidth * 0.6
+          ) - this.constructor.UNIFORM_PREVIEW_DEFAULT_HORIZONTAL_PADDING_PX;
+
+        if (estimated > 0) {
+          return estimated;
+        }
+      }
+    }
+
+    return this.constructor.UNIFORM_PREVIEW_QUAL_ITEM_WIDTH_PX;
+  }
+
+  #uniformCacheKeyForUser(user) {
+    const raw = user?.uniformCacheKey ?? user?.uniform_cache_key;
+    const value = `${raw || ""}`.trim();
+    return value || null;
+  }
+
+  #uniformPngUrlForUser(user) {
+    const normalized = `${user?.username || ""}`.trim().toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+
+    const baseUrl = getURL(`/uniform/${encodeURIComponent(normalized)}.png`);
+    const cacheKey = this.#uniformCacheKeyForUser(user);
+    if (!cacheKey) {
+      return baseUrl;
+    }
+
+    return `${baseUrl}?v=${encodeURIComponent(cacheKey)}`;
+  }
+
+  #userBadgesUrlForUser(user) {
+    const normalized = `${user?.username || ""}`.trim();
+    if (!normalized) {
+      return null;
+    }
+
+    const baseUrl = getURL(`/user-badges/${encodeURIComponent(normalized)}.json`);
+    const cacheKey = this.#uniformCacheKeyForUser(user);
+    if (!cacheKey) {
+      return baseUrl;
+    }
+
+    return `${baseUrl}?orbat_uniform_key=${encodeURIComponent(cacheKey)}`;
   }
 
   async #ensureUniformPreviewLoaded(user, key) {
     const cached = this.#uniformPreviewStateForKey(key);
-    if (cached?.status === "available" || cached?.status === "loading") {
+    if (cached?.status === "available") {
       return;
     }
 
@@ -1577,6 +1746,22 @@ export default class OrbatNode extends Component {
       return;
     }
 
+    const inflight = this.orbatUniformPreviewCache.getInflight(key);
+    if (inflight) {
+      await inflight;
+      return;
+    }
+
+    const loadPromise = this.#loadUniformPreview(user, key);
+    this.orbatUniformPreviewCache.setInflight(key, loadPromise);
+    try {
+      await loadPromise;
+    } finally {
+      this.orbatUniformPreviewCache.clearInflight(key, loadPromise);
+    }
+  }
+
+  async #loadUniformPreview(user, key) {
     const displayName = this.formatDisplayName(user);
     this.#setUniformPreviewState(key, {
       status: "loading",
@@ -1598,10 +1783,21 @@ export default class OrbatNode extends Component {
       return;
     }
 
-    const uniformUrl = this.#uniformPngUrlForUsername(username);
+    const uniformUrl = this.#uniformPngUrlForUser(user);
+    if (!uniformUrl) {
+      this.#setUniformPreviewState(key, {
+        status: "unavailable",
+        url: null,
+        displayName,
+        additionalQualifications: [],
+        checkedAt: Date.now(),
+      });
+      return;
+    }
+
     const [uniformPreview, additionalQualifications] = await Promise.all([
       this.#fetchUniformPng(uniformUrl),
-      this.#fetchAdditionalQualifications(username),
+      this.#fetchAdditionalQualifications(user),
     ]);
 
     if (!uniformPreview?.available || !uniformPreview.url) {
@@ -1665,9 +1861,14 @@ export default class OrbatNode extends Component {
     }
   }
 
-  async #fetchAdditionalQualifications(username) {
+  async #fetchAdditionalQualifications(user) {
+    const requestUrl = this.#userBadgesUrlForUser(user);
+    if (!requestUrl) {
+      return [];
+    }
+
     try {
-      const response = await fetch(this.#userBadgesUrlForUsername(username), {
+      const response = await fetch(requestUrl, {
         method: "GET",
         credentials: "same-origin",
         headers: { Accept: "application/json" },

@@ -2,6 +2,7 @@
 
 require "set" # rubocop:disable Lint/RedundantRequireStatement
 require "date" # rubocop:disable Lint/RedundantRequireStatement
+require "digest" # rubocop:disable Lint/RedundantRequireStatement
 
 class ::Orbat::Service
   CACHE_KEY = "orbat:tree"
@@ -628,6 +629,7 @@ class ::Orbat::Service
         else
           []
         end
+      uniform_cache_data = build_uniform_cache_data(member_records)
 
       members = Hash.new { |hash, key| hash[key] = [] }
       user_groups = Hash.new { |hash, key| hash[key] = [] }
@@ -660,6 +662,8 @@ class ::Orbat::Service
         )
 
       {
+        uniform_cache_base_key: uniform_cache_data[:base_key],
+        uniform_state_digests: uniform_cache_data[:state_digests],
         groups: groups,
         members: members,
         user_groups: user_groups,
@@ -676,6 +680,49 @@ class ::Orbat::Service
         errors: [],
         missing_groups: Set.new
       }
+    end
+
+    def build_uniform_cache_data(member_records)
+      empty = { base_key: nil, state_digests: {} }
+      return empty if member_records.blank?
+
+      unless defined?(::DiscourseProjectUniform) &&
+               defined?(::DiscourseProjectUniform::CacheKey) &&
+               ::DiscourseProjectUniform.respond_to?(:public_uniforms_enabled?) &&
+               ::DiscourseProjectUniform.public_uniforms_enabled?
+        return empty
+      end
+
+      base_key = ::DiscourseProjectUniform::CacheKey.current.to_s
+      return empty if base_key.blank?
+
+      user_ids = member_records.map(&:user_id).compact.uniq
+      return empty if user_ids.blank?
+
+      group_pairs = GroupUser.where(user_id: user_ids).order(:user_id, :group_id).pluck(:user_id, :group_id)
+      badge_pairs = UserBadge.where(user_id: user_ids).order(:user_id, :badge_id).distinct.pluck(:user_id, :badge_id)
+
+      groups_by_user = Hash.new { |hash, key| hash[key] = [] }
+      badges_by_user = Hash.new { |hash, key| hash[key] = [] }
+
+      group_pairs.each do |user_id, group_id|
+        groups_by_user[user_id] << group_id
+      end
+
+      badge_pairs.each do |user_id, badge_id|
+        badges_by_user[user_id] << badge_id
+      end
+
+      state_digests = {}
+      user_ids.each do |user_id|
+        state_digests[user_id] =
+          Digest::SHA1.hexdigest("#{groups_by_user[user_id].join(",")}|#{badges_by_user[user_id].join(",")}")
+      end
+
+      { base_key: base_key, state_digests: state_digests }
+    rescue => e
+      Rails.logger.warn("[orbat] uniform cache key build failed: #{e.class}: #{e.message}")
+      empty
     end
 
     def build_rank_only_index(rank_priority_groups)
@@ -903,7 +950,9 @@ class ::Orbat::Service
     end
 
     def sort_and_limit(users, select, context)
-      limit = select && select["limit"]
+      raw_limit = select.is_a?(Hash) ? select["limit"] : nil
+      limit = Integer(raw_limit, exception: false)
+      limit = nil if limit && limit.negative?
       sort_mode = normalize_sort_mode(select.is_a?(Hash) ? select["sort"] : nil)
       select_index = sort_mode == SORT_MODE_ROLE ? build_select_index(select) : {}
 
@@ -925,7 +974,7 @@ class ::Orbat::Service
           end
         end
 
-      sorted = sorted.first(limit) if limit.present?
+      sorted = sorted.first(limit) unless limit.nil?
 
       sorted.map { |user| serialize_user(user, context) }
     end
@@ -1003,6 +1052,8 @@ class ::Orbat::Service
     def serialize_user(user, context)
       summary_path = "#{Discourse.base_path}/u/#{user.encoded_username}/summary"
       profile_path = "#{Discourse.base_path}/u/#{user.encoded_username}"
+      uniform_cache_key = uniform_cache_key_for_user(user, context)
+      is_recruit = recruit_user?(user, context)
 
       rank_prefix =
         if defined?(::DiscourseRankOnNames) && ::DiscourseRankOnNames.respond_to?(:prefix_for_user)
@@ -1025,8 +1076,28 @@ class ::Orbat::Service
         "summaryPath" => summary_path,
         "profilePath" => profile_path,
         "rankPrefix" => rank_prefix,
+        "uniformCacheKey" => uniform_cache_key,
+        "uniform_cache_key" => uniform_cache_key,
+        "isRecruit" => is_recruit,
+        "is_recruit" => is_recruit,
         "groups" => groups
       }
+    end
+
+    def recruit_user?(user, context)
+      Array(context[:user_groups][user.id]).any? do |name|
+        name.to_s.strip.casecmp("Recruit").zero?
+      end
+    end
+
+    def uniform_cache_key_for_user(user, context)
+      base_key = context[:uniform_cache_base_key].to_s
+      return nil if base_key.blank?
+
+      digest = context.dig(:uniform_state_digests, user.id).to_s
+      return base_key if digest.blank?
+
+      "#{base_key}:#{digest}"
     end
 
     def normalize_group_list(value)
