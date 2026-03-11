@@ -12,6 +12,8 @@ end
 require_relative "lib/orbat/service"
 
 register_asset "stylesheets/common/orbat.scss"
+register_svg_icon "save"
+register_svg_icon "history"
 enabled_site_setting :orbat_enabled
 add_admin_route "orbat_admin.nav_title", "orbat"
 
@@ -152,7 +154,7 @@ after_initialize do
     get "/orbat" => "orbat/public#index", constraints: { format: :html }
     get "/orbat.json" => "orbat/public#data"
     get "/admin/plugins/orbat" => "admin/plugins#index"
-    get "/admin/plugins/orbat.json" => "orbat/admin#show"
+    get "/admin/plugins/orbat/config.json" => "orbat/admin#show"
     post "/admin/plugins/orbat/preview" => "orbat/admin#preview"
     post "/admin/plugins/orbat/restore" => "orbat/admin#restore"
     put "/admin/users/:id/orbat-join-date" => "orbat/admin_users#update_join_date"

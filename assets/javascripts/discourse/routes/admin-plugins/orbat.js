@@ -10,7 +10,7 @@ export default class AdminPluginsOrbatRoute extends DiscourseRoute {
       return { disallow: true };
     }
 
-    return ajax("/admin/plugins/orbat.json");
+    return ajax("/admin/plugins/orbat/config.json");
   }
 
   setupController(controller, model) {
