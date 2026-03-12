@@ -1845,11 +1845,26 @@ export default class OrbatNode extends Component {
 
   async #fetchUniformPng(url) {
     try {
-      const response = await fetch(url, {
+      let response = await fetch(url, {
         method: "GET",
         credentials: "same-origin",
+        cache: "no-store",
         headers: { Accept: "image/png" },
       });
+
+      const initialDisposition = `${response.headers.get("content-disposition") || ""}`.toLowerCase();
+      if (!response.ok || initialDisposition.includes("uniform-missing-")) {
+        const retryUrl = `${url}${url.includes("?") ? "&" : "?"}_orbat_retry=${Date.now()}`;
+        response = await fetch(retryUrl, {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            Accept: "image/png",
+            "Cache-Control": "no-cache",
+          },
+        });
+      }
 
       if (!response.ok) {
         return { available: false, url: null };
