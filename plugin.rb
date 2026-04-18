@@ -27,6 +27,8 @@ after_initialize do
   on(:group_user_destroyed){ ::Orbat::Service.clear_cache }
   on(:user_added_to_group) { ::Orbat::Service.clear_cache }
   on(:user_removed_from_group) { ::Orbat::Service.clear_cache }
+  on(:user_badge_granted) { ::Orbat::Service.clear_cache }
+  on(:user_badge_revoked) { ::Orbat::Service.clear_cache }
   on(:user_created) { ::Orbat::Service.clear_cache }
   on(:user_updated) { ::Orbat::Service.clear_cache }
   on(:user_destroyed) { ::Orbat::Service.clear_cache }

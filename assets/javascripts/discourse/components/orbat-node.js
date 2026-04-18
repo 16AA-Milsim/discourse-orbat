@@ -82,6 +82,7 @@ const PROJECT_UNIFORM_UNIFORM_DATA_MODULE_ID =
  */
 export default class OrbatNode extends Component {
   static UNAVAILABLE_PREVIEW_RECHECK_MS = 30_000;
+  static AVAILABLE_PREVIEW_RECHECK_MS = 120_000;
   static UNIFORM_PREVIEW_MARGIN_PX = 8;
   static UNIFORM_PREVIEW_GAP_PX = 8;
   static UNIFORM_PREVIEW_PREFETCH_IDLE_TIMEOUT_MS = 1_200;
@@ -1210,7 +1211,13 @@ export default class OrbatNode extends Component {
   }
 
   #uniformPreviewKeyForUser(user) {
-    return `${user?.id ?? user?.username ?? user?.name ?? ""}`.trim();
+    const identity = `${user?.id ?? user?.username ?? user?.name ?? ""}`.trim();
+    if (!identity) {
+      return null;
+    }
+
+    const cacheKey = this.#uniformCacheKeyForUser(user);
+    return cacheKey ? `${identity}:${cacheKey}` : identity;
   }
 
   #uniformPreviewStateForKey(key) {
@@ -1450,14 +1457,18 @@ export default class OrbatNode extends Component {
     return candidateKeys
       .map((key) => {
         const cached = this.#uniformPreviewStateForKey(key);
-        if (cached?.status === "available" || cached?.status === "loading") {
+        const checkedAt = cached?.checkedAt || 0;
+        const availableFresh =
+          cached?.status === "available" &&
+          Date.now() - checkedAt < this.constructor.AVAILABLE_PREVIEW_RECHECK_MS;
+
+        if (availableFresh || cached?.status === "loading") {
           return null;
         }
 
         if (
           cached?.status === "unavailable" &&
-          Date.now() - (cached.checkedAt || 0) <
-          this.constructor.UNAVAILABLE_PREVIEW_RECHECK_MS
+          Date.now() - checkedAt < this.constructor.UNAVAILABLE_PREVIEW_RECHECK_MS
         ) {
           return null;
         }
@@ -1721,7 +1732,7 @@ export default class OrbatNode extends Component {
     return value || null;
   }
 
-  #uniformPngUrlForUser(user) {
+  #uniformPngUrlForUser(user, { cacheBust = false } = {}) {
     const normalized = `${user?.username || ""}`.trim().toLowerCase();
     if (!normalized) {
       return null;
@@ -1733,7 +1744,12 @@ export default class OrbatNode extends Component {
       return baseUrl;
     }
 
-    return `${baseUrl}?v=${encodeURIComponent(cacheKey)}`;
+    const withVersion = `${baseUrl}?v=${encodeURIComponent(cacheKey)}`;
+    if (!cacheBust) {
+      return withVersion;
+    }
+
+    return `${withVersion}&_orbat_refresh=${Date.now()}`;
   }
 
   #userBadgesUrlForUser(user) {
@@ -1753,13 +1769,17 @@ export default class OrbatNode extends Component {
 
   async #ensureUniformPreviewLoaded(user, key) {
     const cached = this.#uniformPreviewStateForKey(key);
-    if (cached?.status === "available") {
+    const checkedAt = cached?.checkedAt || 0;
+    const availableFresh =
+      cached?.status === "available" &&
+      Date.now() - checkedAt < this.constructor.AVAILABLE_PREVIEW_RECHECK_MS;
+    if (availableFresh) {
       return;
     }
 
     if (
       cached?.status === "unavailable" &&
-      Date.now() - (cached.checkedAt || 0) < this.constructor.UNAVAILABLE_PREVIEW_RECHECK_MS
+      Date.now() - checkedAt < this.constructor.UNAVAILABLE_PREVIEW_RECHECK_MS
     ) {
       return;
     }
@@ -1770,7 +1790,8 @@ export default class OrbatNode extends Component {
       return;
     }
 
-    const loadPromise = this.#loadUniformPreview(user, key);
+    const forceRevalidate = cached?.status === "available";
+    const loadPromise = this.#loadUniformPreview(user, key, { forceRevalidate });
     this.orbatUniformPreviewCache.setInflight(key, loadPromise);
     try {
       await loadPromise;
@@ -1779,7 +1800,7 @@ export default class OrbatNode extends Component {
     }
   }
 
-  async #loadUniformPreview(user, key) {
+  async #loadUniformPreview(user, key, { forceRevalidate = false } = {}) {
     const displayName = this.formatDisplayName(user);
     this.#setUniformPreviewState(key, {
       status: "loading",
@@ -1801,7 +1822,9 @@ export default class OrbatNode extends Component {
       return;
     }
 
-    const uniformUrl = this.#uniformPngUrlForUser(user);
+    const uniformUrl = this.#uniformPngUrlForUser(user, {
+      cacheBust: !!forceRevalidate,
+    });
     if (!uniformUrl) {
       this.#setUniformPreviewState(key, {
         status: "unavailable",
