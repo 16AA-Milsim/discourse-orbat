@@ -85,8 +85,8 @@ export default class OrbatNode extends Component {
   static AVAILABLE_PREVIEW_RECHECK_MS = 120_000;
   static UNIFORM_PREVIEW_MARGIN_PX = 8;
   static UNIFORM_PREVIEW_GAP_PX = 8;
-  static UNIFORM_PREVIEW_PREFETCH_IDLE_TIMEOUT_MS = 1_200;
-  static UNIFORM_PREVIEW_PREFETCH_CONCURRENCY = 2;
+  static UNIFORM_PREVIEW_PREFETCH_IDLE_TIMEOUT_MS = 250;
+  static UNIFORM_PREVIEW_PREFETCH_CONCURRENCY = 4;
   static UNIFORM_PREVIEW_FOCUS_SUPPRESS_MS = 500;
   static UNIFORM_PREVIEW_QUAL_ITEM_WIDTH_PX = 44;
   static UNIFORM_PREVIEW_QUAL_DEFAULT_GAP_PX = 12;
@@ -1450,9 +1450,13 @@ export default class OrbatNode extends Component {
         }
       });
 
+    const allKeys = Array.from(usersByKey.keys());
     const candidateKeys = visibleKeys.size
-      ? Array.from(visibleKeys)
-      : Array.from(usersByKey.keys());
+      ? [
+          ...Array.from(visibleKeys),
+          ...allKeys.filter((key) => !visibleKeys.has(key)),
+        ]
+      : allKeys;
 
     return candidateKeys
       .map((key) => {
@@ -1802,13 +1806,32 @@ export default class OrbatNode extends Component {
 
   async #loadUniformPreview(user, key, { forceRevalidate = false } = {}) {
     const displayName = this.formatDisplayName(user);
-    this.#setUniformPreviewState(key, {
-      status: "loading",
-      url: null,
-      displayName,
-      additionalQualifications: [],
-      checkedAt: Date.now(),
-    });
+    const previous = this.#uniformPreviewStateForKey(key);
+    const hadCachedPreview =
+      forceRevalidate &&
+      previous?.status === "available" &&
+      typeof previous?.url === "string" &&
+      previous.url.length > 0;
+
+    if (hadCachedPreview) {
+      this.#setUniformPreviewState(key, {
+        status: "available",
+        url: previous.url,
+        displayName,
+        additionalQualifications: Array.isArray(previous?.additionalQualifications)
+          ? previous.additionalQualifications
+          : [],
+        checkedAt: previous?.checkedAt || Date.now(),
+      });
+    } else {
+      this.#setUniformPreviewState(key, {
+        status: "loading",
+        url: null,
+        displayName,
+        additionalQualifications: [],
+        checkedAt: Date.now(),
+      });
+    }
 
     const username = user?.username?.trim();
     if (!username) {
@@ -1837,11 +1860,24 @@ export default class OrbatNode extends Component {
     }
 
     const [uniformPreview, additionalQualifications] = await Promise.all([
-      this.#fetchUniformPng(uniformUrl),
+      this.#fetchUniformPng(uniformUrl, { preferCache: !forceRevalidate }),
       this.#fetchAdditionalQualifications(user),
     ]);
 
     if (!uniformPreview?.available || !uniformPreview.url) {
+      if (hadCachedPreview && previous?.url) {
+        this.#setUniformPreviewState(key, {
+          status: "available",
+          url: previous.url,
+          displayName,
+          additionalQualifications: Array.isArray(previous?.additionalQualifications)
+            ? previous.additionalQualifications
+            : [],
+          checkedAt: Date.now(),
+        });
+        return;
+      }
+
       this.#setUniformPreviewState(key, {
         status: "unavailable",
         url: null,
@@ -1866,12 +1902,12 @@ export default class OrbatNode extends Component {
     });
   }
 
-  async #fetchUniformPng(url) {
+  async #fetchUniformPng(url, { preferCache = false } = {}) {
     try {
       let response = await fetch(url, {
         method: "GET",
         credentials: "same-origin",
-        cache: "no-store",
+        cache: preferCache ? "force-cache" : "no-store",
         headers: { Accept: "image/png" },
       });
 
